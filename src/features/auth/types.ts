@@ -7,7 +7,9 @@ export type AuthActionState = {
       | "company"
       | "email"
       | "password"
-      | "terms",
+      | "terms"
+      | "newPassword"
+      | "confirmPassword",
       string[]
     >
   >

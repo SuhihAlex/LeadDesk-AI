@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Building2, ChevronsUpDown } from "lucide-react"
+import { Building2, ChevronsUpDown, LogOut } from "lucide-react"
 
 import { BrandLogo } from "@/components/layout/brand-logo"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -13,6 +13,8 @@ import {
   appSettingsNavigation,
 } from "@/config/app-navigation"
 import { cn } from "@/lib/utils"
+
+import { logoutAction } from "@/features/auth/actions"
 
 type AppSidebarProps = {
   onNavigate?: () => void
@@ -129,24 +131,38 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
       </nav>
 
       <div className="shrink-0 border-t border-sidebar-border p-3">
-        <Button
-          variant="ghost"
-          className="h-auto w-full justify-start gap-3 px-2 py-2"
-          type="button"
-        >
-          <Avatar className="size-9">
-            <AvatarFallback>AM</AvatarFallback>
-          </Avatar>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            className="h-auto min-w-0 flex-1 justify-start gap-3 px-2 py-2"
+            type="button"
+          >
+            <Avatar className="size-9">
+              <AvatarFallback>AM</AvatarFallback>
+            </Avatar>
 
-          <span className="min-w-0 text-left">
-            <span className="block truncate text-sm font-semibold">
-              Alex Morgan
+            <span className="min-w-0 text-left">
+              <span className="block truncate text-sm font-semibold">
+                Alex Morgan
+              </span>
+              <span className="block truncate text-xs text-muted-foreground">
+                alex@kinetic.studio
+              </span>
             </span>
-            <span className="block truncate text-xs text-muted-foreground">
-              alex@kinetic.studio
-            </span>
-          </span>
-        </Button>
+          </Button>
+
+          <form action={logoutAction}>
+            <Button
+              type="submit"
+              variant="ghost"
+              size="icon"
+              aria-label="Log out"
+              title="Log out"
+            >
+              <LogOut className="size-4" aria-hidden="true" />
+            </Button>
+          </form>
+        </div>
       </div>
     </aside>
   )

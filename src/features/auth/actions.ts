@@ -7,6 +7,7 @@ import {
   forgotPasswordSchema,
   loginSchema,
   registerSchema,
+  resetPasswordSchema,
 } from "@/features/auth/schemas"
 import type { AuthActionState } from "@/features/auth/types"
 import { getSiteUrl } from "@/lib/site-url"
@@ -220,6 +221,54 @@ export async function forgotPasswordAction(
     message:
       "If an account exists for this email address, recovery instructions have been sent.",
   }
+}
+
+export async function resetPasswordAction(
+  _previousState: AuthActionState,
+  formData: FormData,
+): Promise<AuthActionState> {
+  const parsed = resetPasswordSchema.safeParse({
+    newPassword: getStringValue(formData, "newPassword"),
+    confirmPassword: getStringValue(formData, "confirmPassword"),
+  })
+
+  if (!parsed.success) {
+    return {
+      status: "error",
+      message: "Check the highlighted fields.",
+      fieldErrors: getFieldErrors(parsed.error),
+    }
+  }
+
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser()
+
+  if (userError || !user) {
+    return {
+      status: "error",
+      message:
+        "Your recovery session has expired. Request a new password reset email.",
+    }
+  }
+
+  const { error } = await supabase.auth.updateUser({
+    password: parsed.data.newPassword,
+  })
+
+  if (error) {
+    return {
+      status: "error",
+      message: getSafeAuthErrorMessage(error.message),
+    }
+  }
+
+  await supabase.auth.signOut()
+
+  redirect("/login?password=updated")
 }
 
 export async function logoutAction() {
