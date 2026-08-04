@@ -28,3 +28,15 @@ export const initialWorkspaceSettingsActionState: WorkspaceSettingsActionState =
     status: "idle",
     message: "",
   }
+
+export type WorkspaceMember = {
+  id: string
+  userId: string
+  fullName: string
+  email: string
+  avatarUrl: string | null
+  initials: string
+  role: "owner" | "member"
+  joinedAt: string
+  isCurrentUser: boolean
+}
