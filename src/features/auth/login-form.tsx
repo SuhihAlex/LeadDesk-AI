@@ -11,7 +11,11 @@ import { AuthFormMessage } from "@/features/auth/auth-form-message"
 import { AuthSubmitButton } from "@/features/auth/auth-submit-button"
 import { initialAuthActionState } from "@/features/auth/types"
 
-export function LoginForm() {
+type LoginFormProps = {
+  nextPath?: string
+}
+
+export function LoginForm({ nextPath }: LoginFormProps) {
   const [state, formAction, pending] = useActionState(
     loginAction,
     initialAuthActionState,
@@ -19,6 +23,7 @@ export function LoginForm() {
 
   return (
     <form action={formAction} className="space-y-5">
+      {nextPath && <input type="hidden" name="next" value={nextPath} />}
       <AuthFormMessage state={state} />
 
       <div className="space-y-2">

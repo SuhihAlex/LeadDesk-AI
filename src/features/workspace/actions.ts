@@ -12,6 +12,8 @@ import { createClient } from "@/lib/supabase/server"
 
 import { workspaceInvitationSchema } from "@/features/workspace/schemas"
 
+import { redirect } from "next/navigation"
+
 function getStringValue(formData: FormData, key: string) {
   const value = formData.get(key)
 
@@ -202,4 +204,64 @@ export async function revokeWorkspaceInvitationAction(
     .eq("status", "pending")
 
   revalidatePath("/app/team")
+}
+
+function getInvitationErrorCode(message: string) {
+  const normalized = message.toLowerCase()
+
+  if (normalized.includes("email does not match")) {
+    return "email_mismatch"
+  }
+
+  if (normalized.includes("another workspace")) {
+    return "existing_workspace"
+  }
+
+  if (normalized.includes("expired")) {
+    return "expired"
+  }
+
+  if (normalized.includes("no longer pending")) {
+    return "unavailable"
+  }
+
+  return "accept_failed"
+}
+
+export async function acceptWorkspaceInvitationAction(
+  formData: FormData,
+) {
+  const token = getStringValue(formData, "token")
+
+  if (!/^[a-f0-9]{48}$/.test(token)) {
+    redirect("/invite/invalid?error=invalid")
+  }
+
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    redirect(`/login?next=${encodeURIComponent(`/invite/${token}`)}`)
+  }
+
+  const { error } = await supabase.rpc(
+    "accept_workspace_invitation",
+    {
+      invitation_token: token,
+    },
+  )
+
+  if (error) {
+    const errorCode = getInvitationErrorCode(error.message)
+
+    redirect(`/invite/${token}?error=${errorCode}`)
+  }
+
+  revalidatePath("/app", "layout")
+  revalidatePath("/app/team")
+
+  redirect("/app/team")
 }

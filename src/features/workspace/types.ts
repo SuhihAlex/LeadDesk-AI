@@ -62,3 +62,15 @@ export const initialWorkspaceInvitationActionState: WorkspaceInvitationActionSta
     status: "idle",
     message: "",
   }
+
+export type PublicWorkspaceInvitation = {
+  token: string
+  email: string
+  status: "pending" | "accepted" | "revoked" | "expired"
+  expiresAt: string
+  isExpired: boolean
+  workspace: {
+    id: string
+    name: string
+  }
+}

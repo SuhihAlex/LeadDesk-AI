@@ -11,6 +11,7 @@ export async function GET(request: NextRequest) {
     requestUrl.searchParams.get("next"),
     "/app",
   )
+  const acceptingInvitation = next.startsWith("/invite/")
 
   if (!code) {
     return NextResponse.redirect(
@@ -40,22 +41,24 @@ export async function GET(request: NextRequest) {
     )
   }
 
-  const company =
-    typeof user.user_metadata.company === "string"
-      ? user.user_metadata.company.trim()
-      : ""
+  if (!acceptingInvitation) {
+    const company =
+      typeof user.user_metadata.company === "string"
+        ? user.user_metadata.company.trim()
+        : ""
 
-  try {
-    await ensureCurrentUserWorkspace(
-      supabase,
-      company || `${user.email?.split("@")[0] ?? "LeadDesk"} Workspace`,
-    )
-  } catch {
-    await supabase.auth.signOut()
+    try {
+      await ensureCurrentUserWorkspace(
+        supabase,
+        company || `${user.email?.split("@")[0] ?? "LeadDesk"} Workspace`,
+      )
+    } catch {
+      await supabase.auth.signOut()
 
-    return NextResponse.redirect(
-      new URL("/login?error=workspace_failed", requestUrl.origin),
-    )
+      return NextResponse.redirect(
+        new URL("/login?error=workspace_failed", requestUrl.origin),
+      )
+    }
   }
 
   return NextResponse.redirect(new URL(next, requestUrl.origin))

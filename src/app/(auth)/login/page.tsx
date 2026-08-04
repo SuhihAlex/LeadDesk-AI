@@ -7,6 +7,7 @@ type LoginPageProps = {
   searchParams: Promise<{
     error?: string
     password?: string
+    next?: string
   }>
 }
 
@@ -14,6 +15,11 @@ export default async function LoginPage({
   searchParams,
 }: LoginPageProps) {
   const params = await searchParams
+
+  const nextPath =
+    params.next?.startsWith("/") && !params.next.startsWith("//")
+      ? params.next
+      : undefined
 
   return (
     <Card className="w-full shadow-sm">
@@ -46,12 +52,16 @@ export default async function LoginPage({
             logging in again.
           </div>
         )}
-        <LoginForm />
+        <LoginForm nextPath={nextPath} />
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
           New to LeadDesk AI?{" "}
           <Link
-            href="/register"
+            href={
+              nextPath
+                ? `/register?next=${encodeURIComponent(nextPath)}`
+                : "/register"
+            }
             className="font-medium text-primary hover:underline"
           >
             Create an account

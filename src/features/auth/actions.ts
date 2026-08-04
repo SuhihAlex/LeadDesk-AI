@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation"
 
 import { ensureCurrentUserWorkspace } from "@/features/auth/ensure-workspace"
+import { getSafeRedirectPath } from "@/features/auth/safe-redirect"
 import {
   forgotPasswordSchema,
   loginSchema,
@@ -74,6 +75,13 @@ export async function loginAction(
     }
   }
 
+  const nextPath = getSafeRedirectPath(
+    getStringValue(formData, "next") || null,
+    "/app",
+  )
+
+  const acceptingInvitation = nextPath.startsWith("/invite/")
+
   const supabase = await createClient()
 
   const { data, error } = await supabase.auth.signInWithPassword({
@@ -88,27 +96,29 @@ export async function loginAction(
     }
   }
 
-  const company =
-    typeof data.user.user_metadata.company === "string"
-      ? data.user.user_metadata.company.trim()
-      : ""
+  if (!acceptingInvitation) {
+    const company =
+      typeof data.user.user_metadata.company === "string"
+        ? data.user.user_metadata.company.trim()
+        : ""
 
-  try {
-    await ensureCurrentUserWorkspace(
-      supabase,
-      company || `${parsed.data.email.split("@")[0]} Workspace`,
-    )
-  } catch {
-    await supabase.auth.signOut()
+    try {
+      await ensureCurrentUserWorkspace(
+        supabase,
+        company || `${parsed.data.email.split("@")[0]} Workspace`,
+      )
+    } catch {
+      await supabase.auth.signOut()
 
-    return {
-      status: "error",
-      message:
-        "Your account was authenticated, but the workspace could not be prepared.",
+      return {
+        status: "error",
+        message:
+          "Your account was authenticated, but the workspace could not be prepared.",
+      }
     }
   }
 
-  redirect("/app")
+  redirect(nextPath)
 }
 
 export async function registerAction(
@@ -131,6 +141,13 @@ export async function registerAction(
     }
   }
 
+  const nextPath = getSafeRedirectPath(
+    getStringValue(formData, "next") || null,
+    "/app",
+  )
+
+  const acceptingInvitation = nextPath.startsWith("/invite/")
+
   const supabase = await createClient()
   const siteUrl = getSiteUrl()
 
@@ -138,7 +155,9 @@ export async function registerAction(
     email: parsed.data.email,
     password: parsed.data.password,
     options: {
-      emailRedirectTo: `${siteUrl}/auth/confirm?next=/app`,
+      emailRedirectTo: `${siteUrl}/auth/confirm?next=${encodeURIComponent(
+        nextPath,
+      )}`,
       data: {
         full_name: parsed.data.fullName,
         company: parsed.data.company,
@@ -153,24 +172,22 @@ export async function registerAction(
     }
   }
 
-  /*
-   * When email confirmation is disabled, signUp may immediately return
-   * an active session. In that case we can bootstrap the workspace now.
-   */
   if (data.session) {
-    try {
-      await ensureCurrentUserWorkspace(supabase, parsed.data.company)
-    } catch {
-      await supabase.auth.signOut()
+    if (!acceptingInvitation) {
+      try {
+        await ensureCurrentUserWorkspace(supabase, parsed.data.company)
+      } catch {
+        await supabase.auth.signOut()
 
-      return {
-        status: "error",
-        message:
-          "Your account was created, but the workspace could not be prepared.",
+        return {
+          status: "error",
+          message:
+            "Your account was created, but the workspace could not be prepared.",
+        }
       }
     }
 
-    redirect("/app")
+    redirect(nextPath)
   }
 
   return {
