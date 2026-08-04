@@ -1,14 +1,10 @@
-import Link from "next/link"
 import {
-  ArrowLeft,
   CheckCircle2,
   Clock3,
   ShieldCheck,
   Sparkles,
 } from "lucide-react"
 
-import { BrandLogo } from "@/components/layout/brand-logo"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { PublicLeadForm } from "@/features/leads/public-lead-form"
 
@@ -36,18 +32,6 @@ const benefits = [
 export default function DemoPage() {
   return (
     <main className="min-h-screen bg-muted/30">
-      <header className="border-b bg-background">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <BrandLogo />
-
-          <Button variant="ghost" asChild>
-            <Link href="/">
-              <ArrowLeft className="size-4" aria-hidden="true" />
-              Back to home
-            </Link>
-          </Button>
-        </div>
-      </header>
 
       <section className="mx-auto grid max-w-7xl gap-10 px-4 py-10 sm:px-6 sm:py-14 lg:grid-cols-[0.8fr_1.2fr] lg:px-8 lg:py-20">
         <div className="lg:sticky lg:top-24 lg:self-start">

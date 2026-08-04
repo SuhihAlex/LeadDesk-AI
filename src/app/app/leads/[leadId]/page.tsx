@@ -32,6 +32,8 @@ import {
   leadTimelineLabels,
 } from "@/features/leads/constants"
 import { getLeadDetails } from "@/features/leads/get-lead-details"
+import { assignLeadAction } from "@/features/leads/management-actions"
+import { getWorkspaceMembers } from "@/features/workspace/get-workspace-members"
 import { LeadPriorityBadge } from "@/features/leads/lead-priority-badge"
 import { formatDate } from "@/lib/format-date"
 import { getInitials } from "@/lib/get-initials"
@@ -60,7 +62,11 @@ export default async function LeadDetailsPage({
   params,
 }: LeadDetailsPageProps) {
   const { leadId } = await params
-  const lead = await getLeadDetails(leadId)
+
+  const [lead, members] = await Promise.all([
+    getLeadDetails(leadId),
+    getWorkspaceMembers(),
+  ])
 
   if (!lead) {
     notFound()
@@ -388,6 +394,53 @@ export default async function LeadDetailsPage({
                       Unassigned
                     </p>
                   )}
+
+                  <form
+                    action={assignLeadAction}
+                    className="mt-4 space-y-3"
+                  >
+                    <input
+                      type="hidden"
+                      name="leadId"
+                      value={lead.id}
+                    />
+
+                    <label className="grid gap-2">
+                      <span className="sr-only">
+                        Assign lead
+                      </span>
+
+                      <select
+                        name="assigneeId"
+                        defaultValue={
+                          lead.assignedTo?.id ?? ""
+                        }
+                        className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                        aria-label="Assign lead to workspace member"
+                      >
+                        <option value="">Unassigned</option>
+
+                        {members.map((member) => (
+                          <option
+                            key={member.userId}
+                            value={member.userId}
+                          >
+                            {member.fullName}
+                            {member.isCurrentUser ? " (You)" : ""}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <Button
+                      type="submit"
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                    >
+                      Update assignment
+                    </Button>
+                  </form>
                 </div>
 
                 <div>

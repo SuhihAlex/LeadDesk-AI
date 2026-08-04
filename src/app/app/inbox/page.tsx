@@ -28,6 +28,7 @@ import {
   leadStageLabels,
 } from "@/features/leads/constants"
 import { getInboxLeads } from "@/features/leads/get-inbox-leads"
+import { openLeadAction } from "@/features/leads/management-actions"
 import {
   hasActiveInboxFilters,
   type InboxSearchParams,
@@ -403,12 +404,20 @@ export default async function InboxPage({
                             />
 
                             <div className="min-w-0">
-                              <Link
-                                href={`/app/leads/${lead.id}`}
-                                className="truncate font-semibold hover:text-primary hover:underline"
-                              >
-                                {lead.fullName}
-                              </Link>
+                              <form action={openLeadAction}>
+                                <input
+                                  type="hidden"
+                                  name="leadId"
+                                  value={lead.id}
+                                />
+
+                                <button
+                                  type="submit"
+                                  className="block max-w-full truncate text-left font-semibold hover:text-primary hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                >
+                                  {lead.fullName}
+                                </button>
+                              </form>
 
                               <p className="mt-1 truncate text-xs text-muted-foreground">
                                 {lead.company || lead.email}

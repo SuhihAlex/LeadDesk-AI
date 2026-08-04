@@ -65,6 +65,7 @@ export type LeadListItem = {
 
 export type LeadActivityType =
   | "lead_created"
+  | "lead_viewed"
   | "stage_changed"
   | "assignment_changed"
   | "note_added"
