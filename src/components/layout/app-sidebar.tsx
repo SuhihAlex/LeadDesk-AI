@@ -2,21 +2,26 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Building2, ChevronsUpDown, LogOut } from "lucide-react"
+import {
+  Building2,
+  ChevronsUpDown,
+  LogOut,
+} from "lucide-react"
 
 import { BrandLogo } from "@/components/layout/brand-logo"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import {
   appNavigation,
   appSettingsNavigation,
 } from "@/config/app-navigation"
+import { logoutAction } from "@/features/auth/actions"
+import type { CurrentWorkspaceContext } from "@/features/workspace/types"
 import { cn } from "@/lib/utils"
 
-import { logoutAction } from "@/features/auth/actions"
-
 type AppSidebarProps = {
+  context: CurrentWorkspaceContext
   onNavigate?: () => void
 }
 
@@ -28,8 +33,14 @@ function isActiveRoute(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`)
 }
 
-export function AppSidebar({ onNavigate }: AppSidebarProps) {
+export function AppSidebar({
+  context,
+  onNavigate,
+}: AppSidebarProps) {
   const pathname = usePathname()
+
+  const workspaceRole =
+    context.workspace.role === "owner" ? "Owner workspace" : "Member workspace"
 
   return (
     <aside className="flex h-full min-h-0 flex-col bg-sidebar text-sidebar-foreground">
@@ -44,16 +55,26 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
           type="button"
         >
           <span className="flex min-w-0 items-center gap-3">
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <Building2 className="size-4" aria-hidden="true" />
+            <span className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-primary/10 text-primary">
+              {context.workspace.logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={context.workspace.logoUrl}
+                  alt=""
+                  className="size-full object-cover"
+                />
+              ) : (
+                <Building2 className="size-4" aria-hidden="true" />
+              )}
             </span>
 
             <span className="min-w-0 text-left">
               <span className="block truncate text-sm font-semibold">
-                KINETIC Studio
+                {context.workspace.name}
               </span>
+
               <span className="block truncate text-xs text-muted-foreground">
-                Pro workspace
+                {workspaceRole}
               </span>
             </span>
           </span>
@@ -138,15 +159,23 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
             type="button"
           >
             <Avatar className="size-9">
-              <AvatarFallback>AM</AvatarFallback>
+              {context.user.avatarUrl && (
+                <AvatarImage
+                  src={context.user.avatarUrl}
+                  alt={context.user.fullName}
+                />
+              )}
+
+              <AvatarFallback>{context.user.initials}</AvatarFallback>
             </Avatar>
 
             <span className="min-w-0 text-left">
               <span className="block truncate text-sm font-semibold">
-                Alex Morgan
+                {context.user.fullName}
               </span>
+
               <span className="block truncate text-xs text-muted-foreground">
-                alex@kinetic.studio
+                {context.user.email}
               </span>
             </span>
           </Button>

@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Bell, Menu, Search } from "lucide-react"
 
 import { AppSidebar } from "@/components/layout/app-sidebar"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
   Sheet,
@@ -12,13 +12,19 @@ import {
   SheetDescription,
   SheetTitle,
 } from "@/components/ui/sheet"
+import type { CurrentWorkspaceContext } from "@/features/workspace/types"
 
 type AppTopbarProps = {
   title: string
   description?: string
+  context: CurrentWorkspaceContext
 }
 
-export function AppTopbar({ title, description }: AppTopbarProps) {
+export function AppTopbar({
+  title,
+  description,
+  context,
+}: AppTopbarProps) {
   const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false)
 
   return (
@@ -63,7 +69,14 @@ export function AppTopbar({ title, description }: AppTopbarProps) {
           </Button>
 
           <Avatar className="size-9">
-            <AvatarFallback>AM</AvatarFallback>
+            {context.user.avatarUrl && (
+              <AvatarImage
+                src={context.user.avatarUrl}
+                alt={context.user.fullName}
+              />
+            )}
+
+            <AvatarFallback>{context.user.initials}</AvatarFallback>
           </Avatar>
         </div>
       </header>
@@ -84,7 +97,10 @@ export function AppTopbar({ title, description }: AppTopbarProps) {
             Navigate through LeadDesk AI workspace pages.
           </SheetDescription>
 
-          <AppSidebar onNavigate={() => setMobileNavigationOpen(false)} />
+          <AppSidebar
+            context={context}
+            onNavigate={() => setMobileNavigationOpen(false)}
+          />
         </SheetContent>
       </Sheet>
     </>
