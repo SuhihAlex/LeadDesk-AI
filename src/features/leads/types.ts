@@ -123,6 +123,18 @@ export type LeadActivityItem = {
   } | null
 }
 
+export type LeadNote = {
+  id: string
+  content: string
+  createdAt: string
+  updatedAt: string
+  author: {
+    id: string
+    fullName: string
+    avatarUrl: string | null
+  }
+}
+
 export type LeadDetails = {
   id: string
   fullName: string
@@ -150,6 +162,7 @@ export type LeadDetails = {
     fullName: string
     avatarUrl: string | null
   } | null
+  notes: LeadNote[]
   activities: LeadActivityItem[]
 }
 

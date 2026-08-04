@@ -35,6 +35,7 @@ import { getLeadDetails } from "@/features/leads/get-lead-details"
 import { assignLeadAction } from "@/features/leads/management-actions"
 import { getWorkspaceMembers } from "@/features/workspace/get-workspace-members"
 import { LeadPriorityBadge } from "@/features/leads/lead-priority-badge"
+import { LeadNoteForm } from "@/features/leads/lead-note-form"
 import { formatDate } from "@/lib/format-date"
 import { getInitials } from "@/lib/get-initials"
 
@@ -340,6 +341,74 @@ export default async function LeadDetailsPage({
                       "This lead has not been qualified by AI yet."}
                   </p>
                 </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="border-b">
+                <h2 className="text-lg font-semibold">
+                  Notes
+                </h2>
+
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Internal workspace notes for this lead.
+                </p>
+              </CardHeader>
+
+              <CardContent className="space-y-6 p-6">
+                <LeadNoteForm leadId={lead.id} />
+
+                {lead.notes.length === 0 ? (
+                  <div className="rounded-xl border border-dashed px-4 py-8 text-center">
+                    <p className="text-sm font-medium">
+                      No notes yet
+                    </p>
+
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Add the first internal note for this lead.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4 border-t pt-6">
+                    {lead.notes.map((note) => (
+                      <article
+                        key={note.id}
+                        className="rounded-xl border bg-muted/20 p-4"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Avatar className="size-8">
+                            {note.author.avatarUrl && (
+                              <AvatarImage
+                                src={note.author.avatarUrl}
+                                alt={note.author.fullName}
+                              />
+                            )}
+
+                            <AvatarFallback className="text-xs">
+                              {getInitials(
+                                note.author.fullName,
+                              )}
+                            </AvatarFallback>
+                          </Avatar>
+
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-medium">
+                              {note.author.fullName}
+                            </p>
+
+                            <p className="text-xs text-muted-foreground">
+                              {formatDate(note.createdAt)}
+                            </p>
+                          </div>
+                        </div>
+
+                        <p className="mt-4 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
+                          {note.content}
+                        </p>
+                      </article>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

@@ -6,6 +6,7 @@ import type {
   LeadActivityType,
   LeadBudgetRange,
   LeadDetails,
+  LeadNote,
   LeadPriority,
   LeadProjectType,
   LeadSource,
@@ -70,6 +71,25 @@ type LeadActivityRow = {
     | null
 }
 
+type LeadNoteRow = {
+  id: string
+  content: string
+  created_at: string
+  updated_at: string
+  author_profile:
+    | {
+        id: string
+        full_name: string
+        avatar_url: string | null
+      }
+    | {
+        id: string
+        full_name: string
+        avatar_url: string | null
+      }[]
+    | null
+}
+
 function normalizeEstimatedValue(
   value: number | string | null,
 ): number | null {
@@ -117,6 +137,7 @@ export async function getLeadDetails(
 
   const [
     { data: leadData, error: leadError },
+    { data: noteData, error: noteError },
     { data: activityData, error: activityError },
   ] = await Promise.all([
     supabase
@@ -154,6 +175,27 @@ export async function getLeadDetails(
       .eq("workspace_id", context.workspace.id)
       .eq("id", leadId)
       .maybeSingle(),
+
+    supabase
+      .from("lead_notes")
+      .select(
+        `
+          id,
+          content,
+          created_at,
+          updated_at,
+          author_profile:profiles!lead_notes_author_id_fkey (
+            id,
+            full_name,
+            avatar_url
+          )
+        `,
+      )
+      .eq("workspace_id", context.workspace.id)
+      .eq("lead_id", leadId)
+      .order("created_at", {
+        ascending: false,
+      }),
     supabase
       .from("lead_activities")
       .select(
@@ -187,6 +229,12 @@ export async function getLeadDetails(
     return null
   }
 
+  if (noteError) {
+    throw new Error(
+      `Lead notes could not be loaded: ${noteError.message}`,
+    )
+  }
+
   if (activityError) {
     throw new Error(
       `Lead activity could not be loaded: ${activityError.message}`,
@@ -197,6 +245,32 @@ export async function getLeadDetails(
   const assignedProfile = getSingleRelation(
     lead.assigned_profile,
   )
+
+  const notes: LeadNote[] = (
+    (noteData ?? []) as LeadNoteRow[]
+  ).flatMap((note) => {
+    const authorProfile = getSingleRelation(
+      note.author_profile,
+    )
+
+    if (!authorProfile) {
+      return []
+    }
+
+    return [
+      {
+        id: note.id,
+        content: note.content,
+        createdAt: note.created_at,
+        updatedAt: note.updated_at,
+        author: {
+          id: authorProfile.id,
+          fullName: authorProfile.full_name,
+          avatarUrl: authorProfile.avatar_url,
+        },
+      },
+    ]
+  })
 
   const activities: LeadActivityItem[] = (
     (activityData ?? []) as LeadActivityRow[]
@@ -253,6 +327,7 @@ export async function getLeadDetails(
           avatarUrl: assignedProfile.avatar_url,
         }
       : null,
+    notes,
     activities,
   }
 }
