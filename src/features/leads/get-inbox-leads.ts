@@ -2,6 +2,7 @@ import "server-only"
 
 import { getCurrentWorkspace } from "@/features/workspace/get-current-workspace"
 import type {
+  InboxFilters,
   LeadBudgetRange,
   LeadInboxResult,
   LeadListItem,
@@ -54,11 +55,34 @@ function normalizeEstimatedValue(
   return Number.isFinite(parsed) ? parsed : null
 }
 
-export async function getInboxLeads(): Promise<LeadInboxResult> {
+function normalizeSearchQuery(
+  value: string,
+): string | undefined {
+  const normalized = value
+    .replace(/[%_*,()\\]/g, " ")
+    .replace(/[\u0000-\u001f\u007f]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 100)
+
+  return normalized.length > 0 ? normalized : undefined
+}
+
+export async function getInboxLeads(
+  filters: InboxFilters,
+): Promise<LeadInboxResult> {
   const context = await getCurrentWorkspace()
   const supabase = await createClient()
 
-  const { data, error, count } = await supabase
+  const workspaceCountQuery = supabase
+    .from("leads")
+    .select("id", {
+      count: "exact",
+      head: true,
+    })
+    .eq("workspace_id", context.workspace.id)
+
+  let query = supabase
     .from("leads")
     .select(
       `
@@ -87,13 +111,85 @@ export async function getInboxLeads(): Promise<LeadInboxResult> {
       },
     )
     .eq("workspace_id", context.workspace.id)
-    .order("created_at", {
-      ascending: false,
-    })
-    .limit(50)
+
+  if (filters.query) {
+    const search = normalizeSearchQuery(filters.query)
+
+    if (search) {
+      query = query.or(
+        [
+          `full_name.ilike.%${search}%`,
+          `email.ilike.%${search}%`,
+          `company.ilike.%${search}%`,
+        ].join(","),
+      )
+    }
+  }
+
+  if (filters.stage) {
+    query = query.eq("stage", filters.stage)
+  }
+
+  if (filters.priority) {
+    query = query.eq("priority", filters.priority)
+  }
+
+  if (filters.source) {
+    query = query.eq("source", filters.source)
+  }
+
+  if (filters.unreadOnly) {
+    query = query.eq("is_unread", true)
+  }
+
+  switch (filters.sort) {
+    case "oldest":
+      query = query.order("created_at", {
+        ascending: true,
+      })
+      break
+
+    case "priority":
+      query = query.order("priority", {
+        ascending: false,
+      })
+      break
+
+    case "score":
+      query = query
+        .order("ai_score", {
+          ascending: false,
+          nullsFirst: false,
+        })
+        .order("created_at", {
+          ascending: false,
+        })
+      break
+
+    default:
+      query = query.order("created_at", {
+        ascending: false,
+      })
+  }
+
+  query = query.limit(50)
+
+  const [
+    { data, error, count },
+    { error: workspaceCountError, count: workspaceCount },
+  ] = await Promise.all([
+    query,
+    workspaceCountQuery,
+  ])
 
   if (error) {
     throw new Error(`Inbox leads could not be loaded: ${error.message}`)
+  }
+
+  if (workspaceCountError) {
+    throw new Error(
+      `Inbox lead count could not be loaded: ${workspaceCountError.message}`,
+    )
   }
 
   const rows = (data ?? []) as LeadRow[]
@@ -131,5 +227,6 @@ export async function getInboxLeads(): Promise<LeadInboxResult> {
   return {
     leads,
     total: count ?? leads.length,
+    workspaceTotal: workspaceCount ?? 0,
   }
 }

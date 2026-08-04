@@ -63,9 +63,25 @@ export type LeadListItem = {
   } | null
 }
 
+export type InboxSort =
+  | "newest"
+  | "oldest"
+  | "priority"
+  | "score"
+
+export type InboxFilters = {
+  query?: string
+  stage?: LeadStage
+  priority?: LeadPriority
+  source?: LeadSource
+  unreadOnly: boolean
+  sort: InboxSort
+}
+
 export type LeadInboxResult = {
   leads: LeadListItem[]
   total: number
+  workspaceTotal: number
 }
 
 export type PublicLeadFormState = {
