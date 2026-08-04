@@ -107,6 +107,7 @@ export type LeadActivityType =
   | "assignment_changed"
   | "note_added"
   | "task_created"
+  | "task_completed"
   | "email_sent"
   | "ai_qualification_completed"
 
@@ -129,6 +130,31 @@ export type LeadNote = {
   createdAt: string
   updatedAt: string
   author: {
+    id: string
+    fullName: string
+    avatarUrl: string | null
+  }
+}
+
+export type TaskStatus =
+  | "todo"
+  | "in_progress"
+  | "completed"
+
+export type LeadTask = {
+  id: string
+  title: string
+  description: string | null
+  status: TaskStatus
+  dueAt: string | null
+  completedAt: string | null
+  createdAt: string
+  assignedTo: {
+    id: string
+    fullName: string
+    avatarUrl: string | null
+  } | null
+  createdBy: {
     id: string
     fullName: string
     avatarUrl: string | null
@@ -163,6 +189,7 @@ export type LeadDetails = {
     avatarUrl: string | null
   } | null
   notes: LeadNote[]
+  tasks: LeadTask[]
   activities: LeadActivityItem[]
 }
 

@@ -7,6 +7,8 @@ import type {
   LeadBudgetRange,
   LeadDetails,
   LeadNote,
+  LeadTask,
+  TaskStatus,
   LeadPriority,
   LeadProjectType,
   LeadSource,
@@ -90,6 +92,40 @@ type LeadNoteRow = {
     | null
 }
 
+type LeadTaskRow = {
+  id: string
+  title: string
+  description: string | null
+  status: TaskStatus
+  due_at: string | null
+  completed_at: string | null
+  created_at: string
+  assigned_profile:
+    | {
+        id: string
+        full_name: string
+        avatar_url: string | null
+      }
+    | {
+        id: string
+        full_name: string
+        avatar_url: string | null
+      }[]
+    | null
+  creator_profile:
+    | {
+        id: string
+        full_name: string
+        avatar_url: string | null
+      }
+    | {
+        id: string
+        full_name: string
+        avatar_url: string | null
+      }[]
+    | null
+}
+
 function normalizeEstimatedValue(
   value: number | string | null,
 ): number | null {
@@ -138,6 +174,7 @@ export async function getLeadDetails(
   const [
     { data: leadData, error: leadError },
     { data: noteData, error: noteError },
+    { data: taskData, error: taskError },
     { data: activityData, error: activityError },
   ] = await Promise.all([
     supabase
@@ -196,6 +233,36 @@ export async function getLeadDetails(
       .order("created_at", {
         ascending: false,
       }),
+
+    supabase
+      .from("tasks")
+      .select(
+        `
+          id,
+          title,
+          description,
+          status,
+          due_at,
+          completed_at,
+          created_at,
+          assigned_profile:profiles!tasks_assigned_to_fkey (
+            id,
+            full_name,
+            avatar_url
+          ),
+          creator_profile:profiles!tasks_created_by_fkey (
+            id,
+            full_name,
+            avatar_url
+          )
+        `,
+      )
+      .eq("workspace_id", context.workspace.id)
+      .eq("lead_id", leadId)
+      .order("created_at", {
+        ascending: false,
+      }),
+
     supabase
       .from("lead_activities")
       .select(
@@ -235,6 +302,12 @@ export async function getLeadDetails(
     )
   }
 
+  if (taskError) {
+    throw new Error(
+      `Lead tasks could not be loaded: ${taskError.message}`,
+    )
+  }
+
   if (activityError) {
     throw new Error(
       `Lead activity could not be loaded: ${activityError.message}`,
@@ -267,6 +340,45 @@ export async function getLeadDetails(
           id: authorProfile.id,
           fullName: authorProfile.full_name,
           avatarUrl: authorProfile.avatar_url,
+        },
+      },
+    ]
+  })
+
+  const tasks: LeadTask[] = (
+    (taskData ?? []) as LeadTaskRow[]
+  ).flatMap((task) => {
+    const assignedProfile = getSingleRelation(
+      task.assigned_profile,
+    )
+    const creatorProfile = getSingleRelation(
+      task.creator_profile,
+    )
+
+    if (!creatorProfile) {
+      return []
+    }
+
+    return [
+      {
+        id: task.id,
+        title: task.title,
+        description: task.description,
+        status: task.status,
+        dueAt: task.due_at,
+        completedAt: task.completed_at,
+        createdAt: task.created_at,
+        assignedTo: assignedProfile
+          ? {
+              id: assignedProfile.id,
+              fullName: assignedProfile.full_name,
+              avatarUrl: assignedProfile.avatar_url,
+            }
+          : null,
+        createdBy: {
+          id: creatorProfile.id,
+          fullName: creatorProfile.full_name,
+          avatarUrl: creatorProfile.avatar_url,
         },
       },
     ]
@@ -328,6 +440,7 @@ export async function getLeadDetails(
         }
       : null,
     notes,
+    tasks,
     activities,
   }
 }

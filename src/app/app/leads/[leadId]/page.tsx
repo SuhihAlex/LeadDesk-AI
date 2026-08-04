@@ -36,6 +36,8 @@ import { assignLeadAction } from "@/features/leads/management-actions"
 import { getWorkspaceMembers } from "@/features/workspace/get-workspace-members"
 import { LeadPriorityBadge } from "@/features/leads/lead-priority-badge"
 import { LeadNoteForm } from "@/features/leads/lead-note-form"
+import { LeadTaskForm } from "@/features/leads/lead-task-form"
+import { setTaskStatusAction } from "@/features/leads/task-actions"
 import { formatDate } from "@/lib/format-date"
 import { getInitials } from "@/lib/get-initials"
 
@@ -405,6 +407,131 @@ export default async function LeadDetailsPage({
                         <p className="mt-4 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
                           {note.content}
                         </p>
+                      </article>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="border-b">
+                <h2 className="text-lg font-semibold">
+                  Tasks
+                </h2>
+
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Create and track follow-up work for this lead.
+                </p>
+              </CardHeader>
+
+              <CardContent className="space-y-6 p-6">
+                <LeadTaskForm
+                  leadId={lead.id}
+                  members={members.map((member) => ({
+                    userId: member.userId,
+                    fullName: member.fullName,
+                    isCurrentUser: member.isCurrentUser,
+                  }))}
+                />
+
+                {lead.tasks.length === 0 ? (
+                  <div className="rounded-xl border border-dashed px-4 py-8 text-center">
+                    <p className="text-sm font-medium">
+                      No tasks yet
+                    </p>
+
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Create the first task for this lead.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4 border-t pt-6">
+                    {lead.tasks.map((task) => (
+                      <article
+                        key={task.id}
+                        className="rounded-xl border bg-muted/20 p-4"
+                      >
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                          <div className="min-w-0">
+                            <p className="font-medium">
+                              {task.title}
+                            </p>
+
+                            {task.description && (
+                              <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
+                                {task.description}
+                              </p>
+                            )}
+
+                            <div className="mt-3 flex flex-wrap gap-3 text-xs text-muted-foreground">
+                              <span>
+                                Created {formatDate(task.createdAt)}
+                              </span>
+
+                              {task.dueAt && (
+                                <span>
+                                  Due {formatDate(task.dueAt)}
+                                </span>
+                              )}
+
+                              {task.assignedTo && (
+                                <span>
+                                  Assigned to {task.assignedTo.fullName}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          <Badge
+                            variant={
+                              task.status === "completed"
+                                ? "default"
+                                : "outline"
+                            }
+                            className="capitalize"
+                          >
+                            {task.status.replace("_", " ")}
+                          </Badge>
+                        </div>
+
+                        <form
+                          action={setTaskStatusAction}
+                          className="mt-4 flex flex-wrap gap-2 border-t pt-4"
+                        >
+                          <input
+                            type="hidden"
+                            name="leadId"
+                            value={lead.id}
+                          />
+
+                          <input
+                            type="hidden"
+                            name="taskId"
+                            value={task.id}
+                          />
+
+                          <select
+                            name="status"
+                            defaultValue={task.status}
+                            className="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
+                          >
+                            <option value="todo">Todo</option>
+                            <option value="in_progress">
+                              In progress
+                            </option>
+                            <option value="completed">
+                              Completed
+                            </option>
+                          </select>
+
+                          <Button
+                            type="submit"
+                            variant="outline"
+                            size="sm"
+                          >
+                            Update status
+                          </Button>
+                        </form>
                       </article>
                     ))}
                   </div>
