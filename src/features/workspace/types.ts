@@ -14,3 +14,17 @@ export type CurrentWorkspaceContext = {
     role: "owner" | "member"
   }
 }
+
+export type WorkspaceSettingsActionState = {
+  status: "idle" | "success" | "error"
+  message: string
+  fieldErrors?: Partial<
+    Record<"fullName" | "workspaceName", string[]>
+  >
+}
+
+export const initialWorkspaceSettingsActionState: WorkspaceSettingsActionState =
+  {
+    status: "idle",
+    message: "",
+  }
