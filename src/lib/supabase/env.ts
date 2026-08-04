@@ -32,3 +32,15 @@ export function getSupabaseSecretKey() {
 
   return value
 }
+
+export function getDemoPublicFormToken() {
+  const value = process.env.NEXT_PUBLIC_DEMO_FORM_TOKEN
+
+  if (!value) {
+    throw new Error(
+      "Missing required environment variable: NEXT_PUBLIC_DEMO_FORM_TOKEN",
+    )
+  }
+
+  return value
+}

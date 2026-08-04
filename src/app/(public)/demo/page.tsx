@@ -1,112 +1,122 @@
+import Link from "next/link"
+import {
+  ArrowLeft,
+  CheckCircle2,
+  Clock3,
+  ShieldCheck,
+  Sparkles,
+} from "lucide-react"
+
+import { BrandLogo } from "@/components/layout/brand-logo"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+import { PublicLeadForm } from "@/features/leads/public-lead-form"
 
-export default function DemoLeadFormPage() {
+const benefits = [
+  {
+    icon: Sparkles,
+    title: "AI-ready qualification",
+    description:
+      "Your request will be structured for faster review and qualification.",
+  },
+  {
+    icon: Clock3,
+    title: "Faster response",
+    description:
+      "Clear project details help the team prepare a more relevant response.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Secure submission",
+    description:
+      "The form uses validation, workspace isolation and explicit consent.",
+  },
+]
+
+export default function DemoPage() {
   return (
-    <section className="border-b">
-      <div className="mx-auto grid w-full max-w-7xl gap-12 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-[0.8fr_1.2fr] lg:px-8">
-        <div className="max-w-xl">
-          <p className="text-sm font-semibold text-primary">Public lead form</p>
+    <main className="min-h-screen bg-muted/30">
+      <header className="border-b bg-background">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+          <BrandLogo />
 
-          <h1 className="mt-3 text-balance text-4xl font-semibold tracking-[-0.04em] sm:text-5xl">
-            See how a new project inquiry enters LeadDesk AI.
+          <Button variant="ghost" asChild>
+            <Link href="/">
+              <ArrowLeft className="size-4" aria-hidden="true" />
+              Back to home
+            </Link>
+          </Button>
+        </div>
+      </header>
+
+      <section className="mx-auto grid max-w-7xl gap-10 px-4 py-10 sm:px-6 sm:py-14 lg:grid-cols-[0.8fr_1.2fr] lg:px-8 lg:py-20">
+        <div className="lg:sticky lg:top-24 lg:self-start">
+          <p className="text-sm font-medium text-primary">
+            Lead form demo
+          </p>
+
+          <h1 className="mt-4 max-w-xl text-4xl font-semibold tracking-[-0.04em] sm:text-5xl">
+            Tell us what you want to build
           </h1>
 
-          <p className="mt-5 text-pretty text-base leading-7 text-muted-foreground">
-            This form represents the public intake experience for a web studio.
-            On Stage 4 it will create a real lead through a secure server
-            endpoint.
+          <p className="mt-5 max-w-xl text-base leading-7 text-muted-foreground">
+            Submit a realistic website or SaaS project inquiry. The request
+            will appear inside the LeadDesk AI workspace Inbox.
           </p>
+
+          <div className="mt-8 space-y-4">
+            {benefits.map((benefit) => {
+              const Icon = benefit.icon
+
+              return (
+                <div
+                  key={benefit.title}
+                  className="flex items-start gap-4"
+                >
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <Icon className="size-5" aria-hidden="true" />
+                  </div>
+
+                  <div>
+                    <h2 className="font-semibold">{benefit.title}</h2>
+                    <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                      {benefit.description}
+                    </p>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          <div className="mt-8 flex items-start gap-3 rounded-xl border bg-background p-4">
+            <CheckCircle2
+              className="mt-0.5 size-5 shrink-0 text-success"
+              aria-hidden="true"
+            />
+
+            <p className="text-sm leading-6 text-muted-foreground">
+              This is a portfolio demo. Submissions are stored as CRM leads
+              for testing the complete LeadDesk workflow.
+            </p>
+          </div>
         </div>
 
-        <Card>
-          <CardHeader>
-            <h2 className="text-xl font-semibold">Tell us about your project</h2>
-            <p className="text-sm leading-6 text-muted-foreground">
-              Complete the details below to generate a demonstration inquiry.
+        <Card className="shadow-sm">
+          <CardHeader className="border-b">
+            <h2 className="text-xl font-semibold">
+              Project inquiry
+            </h2>
+
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              Complete the form with realistic project information.
             </p>
           </CardHeader>
 
-          <CardContent>
-            <form className="grid gap-5 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="lead-name">Name</Label>
-                <Input id="lead-name" placeholder="Olivia Martin" />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="lead-email">Email</Label>
-                <Input
-                  id="lead-email"
-                  type="email"
-                  placeholder="olivia@northstar.io"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="lead-company">Company</Label>
-                <Input id="lead-company" placeholder="Northstar Labs" />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="project-type">Project type</Label>
-                <Input id="project-type" placeholder="SaaS MVP" />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="budget">Approximate budget</Label>
-                <Input id="budget" placeholder="$7,000–$15,000" />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="timeline">Desired timeline</Label>
-                <Input id="timeline" placeholder="1–2 months" />
-              </div>
-
-              <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor="website-url">Current website</Label>
-                <Input
-                  id="website-url"
-                  type="url"
-                  placeholder="https://northstar.io"
-                />
-              </div>
-
-              <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor="project-description">
-                  Project description
-                </Label>
-                <Textarea
-                  id="project-description"
-                  rows={6}
-                  placeholder="Describe the business goal, required pages, functionality, and launch expectations."
-                />
-              </div>
-
-              <div className="flex items-start gap-3 sm:col-span-2">
-                <Checkbox id="lead-consent" />
-                <Label
-                  htmlFor="lead-consent"
-                  className="text-sm font-normal leading-6 text-muted-foreground"
-                >
-                  I agree to the processing of the information submitted in this
-                  demonstration form.
-                </Label>
-              </div>
-
-              <div className="sm:col-span-2">
-                <Button type="submit" size="lg">
-                  Submit demo inquiry
-                </Button>
-              </div>
-            </form>
+          <CardContent className="p-6 sm:p-8">
+            <PublicLeadForm />
           </CardContent>
         </Card>
-      </div>
-    </section>
+      </section>
+    </main>
   )
 }
