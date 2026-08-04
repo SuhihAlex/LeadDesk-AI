@@ -7,6 +7,15 @@ import type {
   LeadTimeline,
 } from "@/features/leads/types"
 
+export const leadStages: LeadStage[] = [
+  "new",
+  "qualified",
+  "contacted",
+  "proposal",
+  "won",
+  "lost",
+]
+
 export const leadStageLabels: Record<LeadStage, string> = {
   new: "New",
   qualified: "Qualified",

@@ -63,6 +63,43 @@ export type LeadListItem = {
   } | null
 }
 
+export type PipelineLead = {
+  id: string
+  fullName: string
+  company: string | null
+  projectType: LeadProjectType
+  budgetRange: LeadBudgetRange
+  estimatedValue: number | null
+  priority: LeadPriority
+  stage: LeadStage
+  aiScore: number | null
+  isUnread: boolean
+  createdAt: string
+  assignedTo: {
+    id: string
+    fullName: string
+    avatarUrl: string | null
+  } | null
+}
+
+export type PipelineColumn = {
+  stage: LeadStage
+  leads: PipelineLead[]
+  count: number
+  estimatedValue: number
+}
+
+export type PipelineResult = {
+  columns: PipelineColumn[]
+  totalLeads: number
+  totalEstimatedValue: number
+}
+
+export type PipelineStageChange = {
+  leadId: string
+  stage: LeadStage
+}
+
 export type LeadActivityType =
   | "lead_created"
   | "lead_viewed"
