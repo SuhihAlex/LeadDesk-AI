@@ -36,6 +36,7 @@ import { assignLeadAction } from "@/features/leads/management-actions"
 import { getWorkspaceMembers } from "@/features/workspace/get-workspace-members"
 import { LeadPriorityBadge } from "@/features/leads/lead-priority-badge"
 import { LeadNoteForm } from "@/features/leads/lead-note-form"
+import { LeadActivityTimeline } from "@/features/leads/lead-activity-timeline"
 import { LeadTaskForm } from "@/features/leads/lead-task-form"
 import { setTaskStatusAction } from "@/features/leads/task-actions"
 import { formatDate } from "@/lib/format-date"
@@ -687,40 +688,9 @@ export default async function LeadDetailsPage({
               </CardHeader>
 
               <CardContent className="p-6">
-                {lead.activities.length === 0 ? (
-                  <div className="py-8 text-center">
-                    <p className="text-sm font-medium">
-                      No activity yet
-                    </p>
-
-                    <p className="mt-2 text-sm text-muted-foreground">
-                      Lead events will appear here as the team
-                      processes this inquiry.
-                    </p>
-                  </div>
-                ) : (
-                  <ol className="space-y-5">
-                    {lead.activities.map((activity) => (
-                      <li
-                        key={activity.id}
-                        className="relative border-l pl-5"
-                      >
-                        <span className="absolute -left-1.5 top-1.5 size-3 rounded-full border-2 border-background bg-primary" />
-
-                        <p className="text-sm font-medium">
-                          {activity.title}
-                        </p>
-
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          {activity.actor
-                            ? activity.actor.fullName
-                            : "System"}{" "}
-                          · {formatDate(activity.createdAt)}
-                        </p>
-                      </li>
-                    ))}
-                  </ol>
-                )}
+                <LeadActivityTimeline
+                  activities={lead.activities}
+                />
               </CardContent>
             </Card>
           </div>
