@@ -7,8 +7,6 @@ import type {
   LeadBudgetRange,
   LeadDetails,
   LeadNote,
-  LeadTask,
-  TaskStatus,
   LeadPriority,
   LeadProjectType,
   LeadSource,
@@ -16,6 +14,11 @@ import type {
   LeadTimeline,
 } from "@/features/leads/types"
 import { createClient } from "@/lib/supabase/server"
+
+import type {
+  TaskStatus,
+  WorkspaceTask,
+} from "@/features/tasks/types"
 
 type LeadDetailsRow = {
   id: string
@@ -100,6 +103,7 @@ type LeadTaskRow = {
   due_at: string | null
   completed_at: string | null
   created_at: string
+  updated_at: string
   assigned_profile:
     | {
         id: string
@@ -245,6 +249,7 @@ export async function getLeadDetails(
           due_at,
           completed_at,
           created_at,
+          updated_at,
           assigned_profile:profiles!tasks_assigned_to_fkey (
             id,
             full_name,
@@ -345,7 +350,7 @@ export async function getLeadDetails(
     ]
   })
 
-  const tasks: LeadTask[] = (
+  const tasks: WorkspaceTask[] = (
     (taskData ?? []) as LeadTaskRow[]
   ).flatMap((task) => {
     const assignedProfile = getSingleRelation(
@@ -368,6 +373,16 @@ export async function getLeadDetails(
         dueAt: task.due_at,
         completedAt: task.completed_at,
         createdAt: task.created_at,
+        updatedAt: task.updated_at,
+        isOverdue:
+          task.status !== "completed" &&
+          task.due_at !== null &&
+          new Date(task.due_at).getTime() < Date.now(),
+        lead: {
+          id: lead.id,
+          fullName: lead.full_name,
+          company: lead.company,
+        },
         assignedTo: assignedProfile
           ? {
               id: assignedProfile.id,

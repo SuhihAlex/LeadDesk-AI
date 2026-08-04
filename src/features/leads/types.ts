@@ -1,3 +1,5 @@
+import type { WorkspaceTask } from "@/features/tasks/types"
+
 export type LeadStage =
   | "new"
   | "qualified"
@@ -136,31 +138,6 @@ export type LeadNote = {
   }
 }
 
-export type TaskStatus =
-  | "todo"
-  | "in_progress"
-  | "completed"
-
-export type LeadTask = {
-  id: string
-  title: string
-  description: string | null
-  status: TaskStatus
-  dueAt: string | null
-  completedAt: string | null
-  createdAt: string
-  assignedTo: {
-    id: string
-    fullName: string
-    avatarUrl: string | null
-  } | null
-  createdBy: {
-    id: string
-    fullName: string
-    avatarUrl: string | null
-  }
-}
-
 export type LeadDetails = {
   id: string
   fullName: string
@@ -189,7 +166,7 @@ export type LeadDetails = {
     avatarUrl: string | null
   } | null
   notes: LeadNote[]
-  tasks: LeadTask[]
+  tasks: WorkspaceTask[]
   activities: LeadActivityItem[]
 }
 
