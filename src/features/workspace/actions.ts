@@ -4,8 +4,13 @@ import { revalidatePath } from "next/cache"
 
 import { getCurrentWorkspace } from "@/features/workspace/get-current-workspace"
 import { workspaceSettingsSchema } from "@/features/workspace/schemas"
-import type { WorkspaceSettingsActionState } from "@/features/workspace/types"
+import type {
+  WorkspaceInvitationActionState,
+  WorkspaceSettingsActionState,
+} from "@/features/workspace/types"
 import { createClient } from "@/lib/supabase/server"
+
+import { workspaceInvitationSchema } from "@/features/workspace/schemas"
 
 function getStringValue(formData: FormData, key: string) {
   const value = formData.get(key)
@@ -79,4 +84,122 @@ export async function updateWorkspaceSettingsAction(
     status: "success",
     message: "Profile and workspace settings were updated.",
   }
+}
+
+export async function createWorkspaceInvitationAction(
+  _previousState: WorkspaceInvitationActionState,
+  formData: FormData,
+): Promise<WorkspaceInvitationActionState> {
+  const parsed = workspaceInvitationSchema.safeParse({
+    email: getStringValue(formData, "email"),
+  })
+
+  if (!parsed.success) {
+    return {
+      status: "error",
+      message: "Check the highlighted field.",
+      fieldErrors: parsed.error.flatten().fieldErrors,
+    }
+  }
+
+  const context = await getCurrentWorkspace()
+
+  if (context.workspace.role !== "owner") {
+    return {
+      status: "error",
+      message: "Only the workspace Owner can invite members.",
+    }
+  }
+
+  if (parsed.data.email === context.user.email.toLowerCase()) {
+    return {
+      status: "error",
+      message: "You are already a member of this workspace.",
+    }
+  }
+
+  const supabase = await createClient()
+
+  const { data: existingInvitation, error: lookupError } = await supabase
+    .from("workspace_invitations")
+    .select("id")
+    .eq("workspace_id", context.workspace.id)
+    .eq("email", parsed.data.email)
+    .eq("status", "pending")
+    .maybeSingle()
+
+  if (lookupError) {
+    return {
+      status: "error",
+      message: "Existing invitations could not be checked.",
+    }
+  }
+
+  if (existingInvitation) {
+    return {
+      status: "error",
+      message: "A pending invitation already exists for this email address.",
+    }
+  }
+
+  const { error } = await supabase
+    .from("workspace_invitations")
+    .insert({
+      workspace_id: context.workspace.id,
+      email: parsed.data.email,
+      role: "member",
+      invited_by: context.user.id,
+    })
+
+  if (error) {
+    if (error.code === "23505") {
+      return {
+        status: "error",
+        message: "A pending invitation already exists for this email address.",
+      }
+    }
+
+    return {
+      status: "error",
+      message: "The invitation could not be created. Please try again.",
+    }
+  }
+
+  revalidatePath("/app/team")
+
+  return {
+    status: "success",
+    message:
+      "Invitation created. Copy the invitation link and send it to the member.",
+  }
+}
+
+export async function revokeWorkspaceInvitationAction(
+  formData: FormData,
+) {
+  const invitationId = getStringValue(formData, "invitationId")
+
+  if (!invitationId) {
+    return
+  }
+
+  const context = await getCurrentWorkspace()
+
+  if (context.workspace.role !== "owner") {
+    return
+  }
+
+  const supabase = await createClient()
+
+  await supabase
+    .from("workspace_invitations")
+    .update({
+      status: "revoked",
+      revoked_at: new Date().toISOString(),
+    })
+    .eq("id", invitationId)
+    .eq("workspace_id", context.workspace.id)
+    .eq("status", "pending")
+
+  revalidatePath("/app/team")
 }

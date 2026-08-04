@@ -40,3 +40,25 @@ export type WorkspaceMember = {
   joinedAt: string
   isCurrentUser: boolean
 }
+
+export type WorkspaceInvitation = {
+  id: string
+  email: string
+  role: "member"
+  token: string
+  status: "pending" | "accepted" | "revoked" | "expired"
+  expiresAt: string
+  createdAt: string
+}
+
+export type WorkspaceInvitationActionState = {
+  status: "idle" | "success" | "error"
+  message: string
+  fieldErrors?: Partial<Record<"email", string[]>>
+}
+
+export const initialWorkspaceInvitationActionState: WorkspaceInvitationActionState =
+  {
+    status: "idle",
+    message: "",
+  }

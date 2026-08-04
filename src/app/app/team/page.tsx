@@ -1,4 +1,9 @@
-import { ShieldCheck, UserPlus, Users } from "lucide-react"
+import {
+  Mail,
+  ShieldCheck,
+  Users,
+  X,
+} from "lucide-react"
 
 import { AppShell } from "@/components/layout/app-shell"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -9,10 +14,16 @@ import { getCurrentWorkspace } from "@/features/workspace/get-current-workspace"
 import { getWorkspaceMembers } from "@/features/workspace/get-workspace-members"
 import { formatDate } from "@/lib/format-date"
 
+import { CopyInvitationLinkButton } from "@/features/workspace/copy-invitation-link-button"
+import { getWorkspaceInvitations } from "@/features/workspace/get-workspace-invitations"
+import { revokeWorkspaceInvitationAction } from "@/features/workspace/actions"
+import { WorkspaceInvitationForm } from "@/features/workspace/workspace-invitation-form"
+
 export default async function TeamPage() {
-  const [context, members] = await Promise.all([
+  const [context, members, invitations] = await Promise.all([
     getCurrentWorkspace(),
     getWorkspaceMembers(),
+    getWorkspaceInvitations(),
   ])
 
   const isOwner = context.workspace.role === "owner"
@@ -43,10 +54,9 @@ export default async function TeamPage() {
                 </p>
               </div>
 
-              <Button disabled={!isOwner}>
-                <UserPlus className="size-4" aria-hidden="true" />
-                Invite member
-              </Button>
+              <Badge variant="outline">
+                {members.length} {members.length === 1 ? "member" : "members"}
+              </Badge>
             </div>
           </CardHeader>
 
@@ -138,6 +148,84 @@ export default async function TeamPage() {
             )}
           </CardContent>
         </Card>
+
+        {isOwner && (
+          <Card>
+            <CardHeader className="border-b">
+              <div className="flex items-center gap-2">
+                <Mail className="size-5 text-primary" aria-hidden="true" />
+                <h2 className="text-lg font-semibold">Member invitations</h2>
+              </div>
+
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                Create a temporary invitation link for a new workspace Member.
+              </p>
+            </CardHeader>
+
+            <CardContent className="space-y-6">
+              <WorkspaceInvitationForm />
+
+              {invitations.length > 0 && (
+                <div className="space-y-3 border-t pt-6">
+                  <div>
+                    <h3 className="text-sm font-semibold">
+                      Pending invitations
+                    </h3>
+
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      These links remain active until accepted, revoked, or expired.
+                    </p>
+                  </div>
+
+                  <div className="divide-y rounded-xl border">
+                    {invitations.map((invitation) => (
+                      <article
+                        key={invitation.id}
+                        className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-semibold">
+                            {invitation.email}
+                          </p>
+
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            Expires {formatDate(invitation.expiresAt)}
+                          </p>
+                        </div>
+
+                        <Badge variant="secondary" className="w-fit capitalize">
+                          {invitation.role}
+                        </Badge>
+
+                        <div className="flex flex-wrap gap-2">
+                          <CopyInvitationLinkButton token={invitation.token} />
+
+                          <form action={revokeWorkspaceInvitationAction}>
+                            <input
+                              type="hidden"
+                              name="invitationId"
+                              value={invitation.id}
+                            />
+
+                            <Button
+                              type="submit"
+                              variant="ghost"
+                              size="sm"
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <X className="size-4" aria-hidden="true" />
+                              Revoke
+                            </Button>
+                          </form>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardContent className="flex items-start gap-4 p-5 sm:p-6">
