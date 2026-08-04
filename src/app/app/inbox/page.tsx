@@ -403,9 +403,12 @@ export default async function InboxPage({
                             />
 
                             <div className="min-w-0">
-                              <p className="truncate font-semibold">
+                              <Link
+                                href={`/app/leads/${lead.id}`}
+                                className="truncate font-semibold hover:text-primary hover:underline"
+                              >
                                 {lead.fullName}
-                              </p>
+                              </Link>
 
                               <p className="mt-1 truncate text-xs text-muted-foreground">
                                 {lead.company || lead.email}

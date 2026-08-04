@@ -63,6 +63,58 @@ export type LeadListItem = {
   } | null
 }
 
+export type LeadActivityType =
+  | "lead_created"
+  | "stage_changed"
+  | "assignment_changed"
+  | "note_added"
+  | "task_created"
+  | "email_sent"
+  | "ai_qualification_completed"
+
+export type LeadActivityItem = {
+  id: string
+  type: LeadActivityType
+  title: string
+  details: Record<string, unknown>
+  createdAt: string
+  actor: {
+    id: string
+    fullName: string
+    avatarUrl: string | null
+  } | null
+}
+
+export type LeadDetails = {
+  id: string
+  fullName: string
+  email: string
+  company: string | null
+  websiteUrl: string | null
+  description: string
+  projectType: LeadProjectType
+  budgetRange: LeadBudgetRange
+  desiredTimeline: LeadTimeline
+  source: LeadSource
+  stage: LeadStage
+  priority: LeadPriority
+  isUnread: boolean
+  estimatedValue: number | null
+  aiScore: number | null
+  aiSummary: string | null
+  aiCompletenessScore: number | null
+  aiProcessedAt: string | null
+  consentGiven: boolean
+  createdAt: string
+  updatedAt: string
+  assignedTo: {
+    id: string
+    fullName: string
+    avatarUrl: string | null
+  } | null
+  activities: LeadActivityItem[]
+}
+
 export type InboxSort =
   | "newest"
   | "oldest"
