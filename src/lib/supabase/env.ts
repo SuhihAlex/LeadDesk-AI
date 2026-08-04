@@ -21,12 +21,12 @@ export function getSupabasePublicEnvironment() {
   }
 }
 
-export function getSupabaseServiceRoleKey() {
-  const value = process.env.SUPABASE_SERVICE_ROLE_KEY
+export function getSupabaseSecretKey() {
+  const value = process.env.SUPABASE_SECRET_KEY
 
   if (!value) {
     throw new Error(
-      "Missing required server environment variable: SUPABASE_SERVICE_ROLE_KEY",
+      "Missing required server environment variable: SUPABASE_SECRET_KEY",
     )
   }
 
