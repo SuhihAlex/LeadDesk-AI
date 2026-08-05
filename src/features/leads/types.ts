@@ -105,6 +105,7 @@ export type PipelineStageChange = {
 export type LeadActivityType =
   | "lead_created"
   | "lead_viewed"
+  | "ai_qualification_started"
   | "stage_changed"
   | "assignment_changed"
   | "note_added"
@@ -112,6 +113,7 @@ export type LeadActivityType =
   | "task_completed"
   | "email_sent"
   | "ai_qualification_completed"
+  | "ai_qualification_failed"
 
 export type LeadActivityItem = {
   id: string
@@ -157,6 +159,10 @@ export type LeadDetails = {
   aiSummary: string | null
   aiCompletenessScore: number | null
   aiProcessedAt: string | null
+  aiStatus: AiProcessingStatus
+  aiLastError: string | null
+  qualification: LeadQualification | null
+  replyDraft: LeadReplyDraft | null
   consentGiven: boolean
   createdAt: string
   updatedAt: string
@@ -209,6 +215,54 @@ export type PublicLeadFormState = {
       string[]
     >
   >
+}
+
+export type AiProcessingStatus =
+  | "pending"
+  | "processing"
+  | "completed"
+  | "failed"
+
+export type LeadQualification = {
+  id: string
+  summary: string
+  score: number
+  completenessScore: number
+  priority: LeadPriority
+  serviceFit: "poor" | "partial" | "good" | "excellent"
+  urgency: "low" | "medium" | "high"
+  extractedProjectType: string | null
+  extractedServices: string[]
+  extractedBudget: string | null
+  extractedTimeline: string | null
+  extractedCompanyContext: string | null
+  extractedMainGoal: string | null
+  missingInformation: string[]
+  risks: string[]
+  scoreBreakdown: {
+    total: number
+    budget: number
+    timeline: number
+    completeness: number
+    serviceFit: number
+    urgency: number
+    descriptionQuality: number
+    explanation: string[]
+  }
+  model: string
+  promptVersion: string
+  createdAt: string
+  updatedAt: string
+}
+
+export type LeadReplyDraft = {
+  id: string
+  subject: string
+  body: string
+  status: "ai_generated" | "edited" | "sent"
+  generatedByModel: string | null
+  createdAt: string
+  updatedAt: string
 }
 
 export const initialPublicLeadFormState: PublicLeadFormState = {

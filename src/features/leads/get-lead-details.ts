@@ -2,6 +2,7 @@ import "server-only"
 
 import { getCurrentWorkspace } from "@/features/workspace/get-current-workspace"
 import type {
+  AiProcessingStatus,
   LeadActivityItem,
   LeadActivityType,
   LeadBudgetRange,
@@ -9,6 +10,8 @@ import type {
   LeadNote,
   LeadPriority,
   LeadProjectType,
+  LeadQualification,
+  LeadReplyDraft,
   LeadSource,
   LeadStage,
   LeadTimeline,
@@ -39,6 +42,8 @@ type LeadDetailsRow = {
   ai_summary: string | null
   ai_completeness_score: number | null
   ai_processed_at: string | null
+  ai_status: AiProcessingStatus
+  ai_last_error: string | null
   consent_given: boolean
   created_at: string
   updated_at: string
@@ -130,6 +135,39 @@ type LeadTaskRow = {
     | null
 }
 
+type LeadQualificationRow = {
+  id: string
+  summary: string
+  score: number
+  completeness_score: number
+  priority: LeadPriority
+  service_fit: "poor" | "partial" | "good" | "excellent"
+  urgency: "low" | "medium" | "high"
+  extracted_project_type: string | null
+  extracted_services: unknown
+  extracted_budget: string | null
+  extracted_timeline: string | null
+  extracted_company_context: string | null
+  extracted_main_goal: string | null
+  missing_information: unknown
+  risks: unknown
+  score_breakdown: unknown
+  model: string
+  prompt_version: string
+  created_at: string
+  updated_at: string
+}
+
+type LeadReplyDraftRow = {
+  id: string
+  subject: string
+  body: string
+  status: "ai_generated" | "edited" | "sent"
+  generated_by_model: string | null
+  created_at: string
+  updated_at: string
+}
+
 function normalizeEstimatedValue(
   value: number | string | null,
 ): number | null {
@@ -159,6 +197,28 @@ function normalizeDetails(
   return {}
 }
 
+function normalizeStringArray(
+  value: unknown,
+): string[] {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  return value.filter(
+    (item): item is string =>
+      typeof item === "string",
+  )
+}
+
+function getNumberValue(
+    value: unknown,
+    fallback = 0,
+  ): number {
+    return typeof value === "number"
+      ? value
+      : fallback
+  }
+
 function getSingleRelation<T>(
   value: T | T[] | null,
 ): T | null {
@@ -179,6 +239,14 @@ export async function getLeadDetails(
     { data: leadData, error: leadError },
     { data: noteData, error: noteError },
     { data: taskData, error: taskError },
+    {
+      data: qualificationData,
+      error: qualificationError,
+    },
+    {
+      data: replyDraftData,
+      error: replyDraftError,
+    },
     { data: activityData, error: activityError },
   ] = await Promise.all([
     supabase
@@ -203,6 +271,8 @@ export async function getLeadDetails(
           ai_summary,
           ai_completeness_score,
           ai_processed_at,
+          ai_status,
+          ai_last_error,
           consent_given,
           created_at,
           updated_at,
@@ -269,6 +339,55 @@ export async function getLeadDetails(
       }),
 
     supabase
+      .from("lead_qualifications")
+      .select(
+        `
+          id,
+          summary,
+          score,
+          completeness_score,
+          priority,
+          service_fit,
+          urgency,
+          extracted_project_type,
+          extracted_services,
+          extracted_budget,
+          extracted_timeline,
+          extracted_company_context,
+          extracted_main_goal,
+          missing_information,
+          risks,
+          score_breakdown,
+          model,
+          prompt_version,
+          created_at,
+          updated_at
+        `,
+      )
+      .eq("workspace_id", context.workspace.id)
+      .eq("lead_id", leadId)
+      .maybeSingle(),
+
+    supabase
+      .from("lead_reply_drafts")
+      .select(
+        `
+          id,
+          subject,
+          body,
+          status,
+          generated_by_model,
+          created_at,
+          updated_at
+        `,
+      )
+      .eq("workspace_id", context.workspace.id)
+      .eq("lead_id", leadId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+
+    supabase
       .from("lead_activities")
       .select(
         `
@@ -310,6 +429,18 @@ export async function getLeadDetails(
   if (taskError) {
     throw new Error(
       `Lead tasks could not be loaded: ${taskError.message}`,
+    )
+  }
+
+  if (qualificationError) {
+    throw new Error(
+      `Lead qualification could not be loaded: ${qualificationError.message}`,
+    )
+  }
+
+  if (replyDraftError) {
+    throw new Error(
+      `Lead reply draft could not be loaded: ${replyDraftError.message}`,
     )
   }
 
@@ -399,6 +530,98 @@ export async function getLeadDetails(
     ]
   })
 
+  const qualificationRow =
+    qualificationData as LeadQualificationRow | null
+
+  const qualificationScoreBreakdown =
+    qualificationRow
+      ? normalizeDetails(
+          qualificationRow.score_breakdown,
+        )
+      : {}
+
+  const qualification: LeadQualification | null =
+    qualificationRow
+      ? {
+          id: qualificationRow.id,
+          summary: qualificationRow.summary,
+          score: qualificationRow.score,
+          completenessScore:
+            qualificationRow.completeness_score,
+          priority: qualificationRow.priority,
+          serviceFit: qualificationRow.service_fit,
+          urgency: qualificationRow.urgency,
+          extractedProjectType:
+            qualificationRow.extracted_project_type,
+          extractedServices: normalizeStringArray(
+            qualificationRow.extracted_services,
+          ),
+          extractedBudget:
+            qualificationRow.extracted_budget,
+          extractedTimeline:
+            qualificationRow.extracted_timeline,
+          extractedCompanyContext:
+            qualificationRow.extracted_company_context,
+          extractedMainGoal:
+            qualificationRow.extracted_main_goal,
+          missingInformation: normalizeStringArray(
+            qualificationRow.missing_information,
+          ),
+          risks: normalizeStringArray(
+            qualificationRow.risks,
+          ),
+          scoreBreakdown: {
+            total: getNumberValue(
+              qualificationScoreBreakdown.total,
+              qualificationRow.score,
+            ),
+            budget: getNumberValue(
+              qualificationScoreBreakdown.budget,
+            ),
+            timeline: getNumberValue(
+              qualificationScoreBreakdown.timeline,
+            ),
+            completeness: getNumberValue(
+              qualificationScoreBreakdown.completeness,
+            ),
+            serviceFit: getNumberValue(
+              qualificationScoreBreakdown.serviceFit,
+            ),
+            urgency: getNumberValue(
+              qualificationScoreBreakdown.urgency,
+            ),
+            descriptionQuality: getNumberValue(
+              qualificationScoreBreakdown.descriptionQuality,
+            ),
+            explanation: normalizeStringArray(
+              qualificationScoreBreakdown.explanation,
+            ),
+          },
+          model: qualificationRow.model,
+          promptVersion:
+            qualificationRow.prompt_version,
+          createdAt: qualificationRow.created_at,
+          updatedAt: qualificationRow.updated_at,
+        }
+      : null
+
+  const replyDraftRow =
+    replyDraftData as LeadReplyDraftRow | null
+
+  const replyDraft: LeadReplyDraft | null =
+    replyDraftRow
+      ? {
+          id: replyDraftRow.id,
+          subject: replyDraftRow.subject,
+          body: replyDraftRow.body,
+          status: replyDraftRow.status,
+          generatedByModel:
+            replyDraftRow.generated_by_model,
+          createdAt: replyDraftRow.created_at,
+          updatedAt: replyDraftRow.updated_at,
+        }
+      : null
+
   const activities: LeadActivityItem[] = (
     (activityData ?? []) as LeadActivityRow[]
   ).map((activity) => {
@@ -444,6 +667,8 @@ export async function getLeadDetails(
     aiCompletenessScore:
       lead.ai_completeness_score,
     aiProcessedAt: lead.ai_processed_at,
+    aiStatus: lead.ai_status,
+    aiLastError: lead.ai_last_error,
     consentGiven: lead.consent_given,
     createdAt: lead.created_at,
     updatedAt: lead.updated_at,
@@ -456,6 +681,8 @@ export async function getLeadDetails(
       : null,
     notes,
     tasks,
+    qualification,
+    replyDraft,
     activities,
   }
 }

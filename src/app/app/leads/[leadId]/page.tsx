@@ -39,6 +39,7 @@ import { LeadNoteForm } from "@/features/leads/lead-note-form"
 import { LeadActivityTimeline } from "@/features/leads/lead-activity-timeline"
 import { LeadTaskForm } from "@/features/leads/lead-task-form"
 import { setTaskStatusAction } from "@/features/leads/task-actions"
+import { QualificationButton } from "@/features/ai/qualification-button"
 import { formatDate } from "@/lib/format-date"
 import { getInitials } from "@/lib/get-initials"
 
@@ -46,20 +47,6 @@ type LeadDetailsPageProps = {
   params: Promise<{
     leadId: string
   }>
-}
-
-function formatEstimatedValue(
-  value: number | null,
-): string {
-  if (value === null) {
-    return "Not calculated"
-  }
-
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(value)
 }
 
 export default async function LeadDetailsPage({
@@ -291,61 +278,203 @@ export default async function LeadDetailsPage({
             </Card>
 
             <Card>
-              <CardHeader className="border-b">
-                <h2 className="text-lg font-semibold">
-                  Qualification
-                </h2>
+  <CardHeader className="border-b">
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div>
+        <h2 className="text-lg font-semibold">
+          Qualification
+        </h2>
 
-                <p className="mt-2 text-sm text-muted-foreground">
-                  AI qualification will be completed during Stage 6.
+        <p className="mt-2 text-sm text-muted-foreground">
+          AI analysis, transparent score and generated reply draft.
+        </p>
+      </div>
+
+      <Badge variant="outline" className="capitalize">
+        {lead.aiStatus}
+      </Badge>
+    </div>
+  </CardHeader>
+
+  <CardContent className="space-y-6 p-6">
+    <QualificationButton
+      leadId={lead.id}
+      isProcessing={lead.aiStatus === "processing"}
+      hasQualification={lead.qualification !== null}
+    />
+
+    {lead.qualification ? (
+      <>
+        <div className="grid gap-5 sm:grid-cols-3">
+          <div>
+            <p className="text-sm font-medium">
+              AI score
+            </p>
+
+            <p className="mt-2 text-2xl font-semibold">
+              {lead.qualification.score}
+            </p>
+          </div>
+
+          <div>
+            <p className="text-sm font-medium">
+              Completeness
+            </p>
+
+            <p className="mt-2 text-2xl font-semibold">
+              {lead.qualification.completenessScore}
+            </p>
+          </div>
+
+          <div>
+            <p className="text-sm font-medium">
+              Service fit
+            </p>
+
+            <p className="mt-2 text-lg font-semibold capitalize">
+              {lead.qualification.serviceFit}
+            </p>
+          </div>
+        </div>
+
+        <div>
+          <p className="text-sm font-medium">
+            AI summary
+          </p>
+
+          <p className="mt-3 text-sm leading-7 text-muted-foreground">
+            {lead.qualification.summary}
+          </p>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <p className="text-sm font-medium">
+              Missing information
+            </p>
+
+            {lead.qualification.missingInformation.length >
+            0 ? (
+              <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+                {lead.qualification.missingInformation.map(
+                  (item) => (
+                    <li key={item}>• {item}</li>
+                  ),
+                )}
+              </ul>
+            ) : (
+              <p className="mt-3 text-sm text-muted-foreground">
+                No major information gaps detected.
+              </p>
+            )}
+          </div>
+
+          <div>
+            <p className="text-sm font-medium">
+              Risks
+            </p>
+
+            {lead.qualification.risks.length > 0 ? (
+              <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+                {lead.qualification.risks.map((risk) => (
+                  <li key={risk}>• {risk}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-3 text-sm text-muted-foreground">
+                No major risks detected.
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <p className="text-sm font-medium">
+            Score breakdown
+          </p>
+
+          <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              [
+                "Budget",
+                lead.qualification.scoreBreakdown.budget,
+                25,
+              ],
+              [
+                "Timeline",
+                lead.qualification.scoreBreakdown.timeline,
+                15,
+              ],
+              [
+                "Completeness",
+                lead.qualification.scoreBreakdown
+                  .completeness,
+                20,
+              ],
+              [
+                "Service fit",
+                lead.qualification.scoreBreakdown
+                  .serviceFit,
+                20,
+              ],
+              [
+                "Urgency",
+                lead.qualification.scoreBreakdown.urgency,
+                10,
+              ],
+              [
+                "Description",
+                lead.qualification.scoreBreakdown
+                  .descriptionQuality,
+                10,
+              ],
+            ].map(([label, value, maximum]) => (
+              <div
+                key={String(label)}
+                className="rounded-xl border p-4"
+              >
+                <p className="text-xs text-muted-foreground">
+                  {label}
                 </p>
-              </CardHeader>
 
-              <CardContent className="grid gap-5 p-6 sm:grid-cols-3">
-                <div>
-                  <p className="text-sm font-medium">
-                    AI score
-                  </p>
+                <p className="mt-2 font-semibold">
+                  {value} / {maximum}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
 
-                  <p className="mt-2 text-2xl font-semibold">
-                    {lead.aiScore ?? "—"}
-                  </p>
-                </div>
+        {lead.replyDraft && (
+          <div className="rounded-xl border bg-muted/20 p-4">
+            <p className="text-sm font-medium">
+              Reply draft
+            </p>
 
-                <div>
-                  <p className="text-sm font-medium">
-                    Completeness
-                  </p>
+            <p className="mt-3 text-sm font-medium">
+              {lead.replyDraft.subject}
+            </p>
 
-                  <p className="mt-2 text-2xl font-semibold">
-                    {lead.aiCompletenessScore ?? "—"}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-sm font-medium">
-                    Estimated value
-                  </p>
-
-                  <p className="mt-2 text-lg font-semibold">
-                    {formatEstimatedValue(
-                      lead.estimatedValue,
-                    )}
-                  </p>
-                </div>
-
-                <div className="sm:col-span-3">
-                  <p className="text-sm font-medium">
-                    AI summary
-                  </p>
-
-                  <p className="mt-3 text-sm leading-7 text-muted-foreground">
-                    {lead.aiSummary ||
-                      "This lead has not been qualified by AI yet."}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+            <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-muted-foreground">
+              {lead.replyDraft.body}
+            </p>
+          </div>
+        )}
+      </>
+    ) : (
+      <div className="rounded-xl border border-dashed p-6">
+        <p className="text-sm text-muted-foreground">
+          {lead.aiStatus === "failed"
+            ? lead.aiLastError ||
+              "AI qualification failed."
+            : lead.aiStatus === "processing"
+              ? "AI qualification is currently processing."
+              : "This lead has not been qualified yet."}
+        </p>
+      </div>
+    )}
+  </CardContent>
+</Card>
 
             <Card>
               <CardHeader className="border-b">

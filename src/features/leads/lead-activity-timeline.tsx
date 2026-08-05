@@ -70,8 +70,16 @@ const activityPresentation: Record<
     label: "Email sent",
     icon: Mail,
   },
+  ai_qualification_started: {
+    label: "AI qualification started",
+    icon: Bot,
+  },
   ai_qualification_completed: {
     label: "AI qualification completed",
+    icon: Bot,
+  },
+  ai_qualification_failed: {
+    label: "AI qualification failed",
     icon: Bot,
   },
 }
