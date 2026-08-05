@@ -13,6 +13,7 @@ import type {
 } from "@/features/leads/types"
 import type {
   DashboardAnalytics,
+  DashboardEmailFailure,
   DashboardMetric,
   DashboardRecentLead,
   DashboardSourceBreakdownItem,
@@ -39,6 +40,22 @@ type DashboardTaskRow = {
   id: string
   status: "todo" | "in_progress" | "completed"
   due_at: string | null
+}
+
+type DashboardEmailDeliveryRow = {
+  id: string
+  lead_id: string
+  recipient_email: string
+  subject: string
+  provider: string
+  status:
+    | "processing"
+    | "sent"
+    | "failed"
+  error_message: string | null
+  created_at: string
+  sent_at: string | null
+  failed_at: string | null
 }
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000
@@ -133,6 +150,10 @@ export async function getDashboardAnalytics(): Promise<DashboardAnalytics> {
   const [
     { data: leadData, error: leadError },
     { data: taskData, error: taskError },
+    {
+      data: emailDeliveryData,
+      error: emailDeliveryError,
+    },
   ] = await Promise.all([
     supabase
       .from("leads")
@@ -168,6 +189,28 @@ export async function getDashboardAnalytics(): Promise<DashboardAnalytics> {
       )
       .eq("workspace_id", context.workspace.id)
       .neq("status", "completed"),
+
+    supabase
+      .from("lead_email_deliveries")
+      .select(
+        `
+          id,
+          lead_id,
+          recipient_email,
+          subject,
+          provider,
+          status,
+          error_message,
+          created_at,
+          sent_at,
+          failed_at
+        `,
+      )
+      .eq("workspace_id", context.workspace.id)
+      .order("created_at", {
+        ascending: false,
+      })
+      .limit(500),
   ])
 
   if (leadError) {
@@ -182,11 +225,21 @@ export async function getDashboardAnalytics(): Promise<DashboardAnalytics> {
     )
   }
 
+  if (emailDeliveryError) {
+    throw new Error(
+      `Dashboard email deliveries could not be loaded: ${emailDeliveryError.message}`,
+    )
+  }
+
   const leads =
     (leadData ?? []) as DashboardLeadRow[]
 
   const tasks =
     (taskData ?? []) as DashboardTaskRow[]
+
+  const emailDeliveries =
+    (emailDeliveryData ??
+      []) as DashboardEmailDeliveryRow[]
 
   const currentPeriodLeads = leads.filter(
     (lead) =>
@@ -273,6 +326,35 @@ export async function getDashboardAnalytics(): Promise<DashboardAnalytics> {
         currentEnd.getTime(),
   ).length
 
+  const sentEmailDeliveries =
+    emailDeliveries.filter(
+      (delivery) =>
+        delivery.status === "sent",
+    )
+
+  const failedEmailDeliveries =
+    emailDeliveries.filter(
+      (delivery) =>
+        delivery.status === "failed",
+    )
+
+  const processingEmailDeliveries =
+    emailDeliveries.filter(
+      (delivery) =>
+        delivery.status === "processing",
+    )
+
+  const completedEmailDeliveries =
+    sentEmailDeliveries.length +
+    failedEmailDeliveries.length
+
+  const emailSuccessRate =
+    completedEmailDeliveries > 0
+      ? (sentEmailDeliveries.length /
+          completedEmailDeliveries) *
+        100
+      : 0
+
   const recentLeads: DashboardRecentLead[] =
     leads.slice(0, 5).map((lead) => ({
       id: lead.id,
@@ -313,6 +395,32 @@ export async function getDashboardAnalytics(): Promise<DashboardAnalytics> {
         (lead) => lead.source === source,
       ).length,
     }))
+
+  const recentEmailFailures:
+    DashboardEmailFailure[] =
+    failedEmailDeliveries
+      .filter(
+        (
+          delivery,
+        ): delivery is DashboardEmailDeliveryRow & {
+          error_message: string
+          failed_at: string
+        } =>
+          delivery.error_message !== null &&
+          delivery.failed_at !== null,
+      )
+      .slice(0, 5)
+      .map((delivery) => ({
+        id: delivery.id,
+        leadId: delivery.lead_id,
+        recipientEmail:
+          delivery.recipient_email,
+        subject: delivery.subject,
+        provider: delivery.provider,
+        errorMessage:
+          delivery.error_message,
+        failedAt: delivery.failed_at,
+      }))
 
   return {
     period: {
@@ -378,10 +486,21 @@ export async function getDashboardAnalytics(): Promise<DashboardAnalytics> {
         (lead) =>
           lead.ai_status === "failed",
       ).length,
+
+      emailSent: sentEmailDeliveries.length,
+
+      emailFailed:
+        failedEmailDeliveries.length,
+
+      emailProcessing:
+        processingEmailDeliveries.length,
+
+      emailSuccessRate,
     },
 
     recentLeads,
     stageBreakdown,
     sourceBreakdown,
+    recentEmailFailures,
   }
 }

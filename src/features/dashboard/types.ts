@@ -35,6 +35,16 @@ export type DashboardSourceBreakdownItem = {
   count: number
 }
 
+export type DashboardEmailFailure = {
+  id: string
+  leadId: string
+  recipientEmail: string
+  subject: string
+  provider: string
+  errorMessage: string
+  failedAt: string
+}
+
 export type DashboardAnalytics = {
   period: {
     currentStart: string
@@ -53,9 +63,14 @@ export type DashboardAnalytics = {
     overdueTasks: number
     aiCompleted: number
     aiFailed: number
+    emailSent: number
+    emailFailed: number
+    emailProcessing: number
+    emailSuccessRate: number
   }
 
   recentLeads: DashboardRecentLead[]
   stageBreakdown: DashboardStageBreakdownItem[]
   sourceBreakdown: DashboardSourceBreakdownItem[]
+  recentEmailFailures: DashboardEmailFailure[]
 }

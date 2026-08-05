@@ -10,6 +10,9 @@ import {
   Sparkles,
   Target,
   Trophy,
+  MailCheck,
+  MailWarning,
+  Send,
 } from "lucide-react"
 
 import { AppShell } from "@/components/layout/app-shell"
@@ -380,9 +383,136 @@ export default async function DashboardPage() {
                   </span>
                 </div>
               </div>
+              <div className="rounded-xl border p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <MailCheck
+                      className="size-4 text-success"
+                      aria-hidden="true"
+                    />
+
+                    <span className="text-sm font-medium">
+                      Emails sent
+                    </span>
+                  </div>
+
+                  <span className="text-lg font-semibold">
+                    {analytics.metrics.emailSent}
+                  </span>
+                </div>
+              </div>
+              <div className="rounded-xl border p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <MailWarning
+                      className="size-4 text-destructive"
+                      aria-hidden="true"
+                    />
+
+                    <span className="text-sm font-medium">
+                      Emails failed
+                    </span>
+                  </div>
+
+                  <span className="text-lg font-semibold">
+                    {analytics.metrics.emailFailed}
+                  </span>
+                </div>
+              </div>
+              <div className="rounded-xl border p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <Send
+                      className="size-4 text-primary"
+                      aria-hidden="true"
+                    />
+
+                    <span className="text-sm font-medium">
+                      Email success rate
+                    </span>
+                  </div>
+
+                  <span className="text-lg font-semibold">
+                    {formatPercent(
+                      analytics.metrics
+                        .emailSuccessRate,
+                    )}
+                  </span>
+                </div>
+
+                {analytics.metrics.emailProcessing >
+                  0 && (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {
+                      analytics.metrics
+                        .emailProcessing
+                    }{" "}
+                    currently processing
+                  </p>
+                )}
+              </div>
             </div>
           </article>
         </section>
+
+        {analytics.recentEmailFailures.length >
+          0 && (
+          <section>
+            <article className="surface-panel overflow-hidden">
+              <div className="border-b px-5 py-4 sm:px-6">
+                <div className="flex items-center gap-2">
+                  <MailWarning
+                    className="size-5 text-destructive"
+                    aria-hidden="true"
+                  />
+
+                  <h2 className="font-semibold">
+                    Recent email failures
+                  </h2>
+                </div>
+
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Latest delivery errors requiring
+                  review or retry.
+                </p>
+              </div>
+
+              <div className="divide-y">
+                {analytics.recentEmailFailures.map(
+                  (failure) => (
+                    <Link
+                      key={failure.id}
+                      href={`/app/leads/${failure.leadId}`}
+                      className="grid gap-3 px-5 py-4 transition-colors hover:bg-muted/40 sm:grid-cols-[1fr_auto] sm:px-6"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">
+                          {failure.subject}
+                        </p>
+
+                        <p className="mt-1 truncate text-sm text-muted-foreground">
+                          {failure.recipientEmail}
+                          {" · "}
+                          {failure.provider}
+                        </p>
+
+                        <p className="mt-2 line-clamp-2 text-sm text-destructive">
+                          {failure.errorMessage}
+                        </p>
+                      </div>
+
+                      <p className="text-xs text-muted-foreground sm:text-right">
+                        {formatDate(
+                          failure.failedAt,
+                        )}
+                      </p>
+                    </Link>
+                  ),
+                )}
+              </div>
+            </article>
+          </section>
+        )}
 
         <section className="grid gap-6 xl:grid-cols-2">
           <article className="surface-panel overflow-hidden">
