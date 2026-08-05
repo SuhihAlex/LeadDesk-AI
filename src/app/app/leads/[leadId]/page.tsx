@@ -46,6 +46,7 @@ import { getInitials } from "@/lib/get-initials"
 import { ReplyDraftForm } from "@/features/ai/reply-draft-form"
 import { LeadValueForm } from "@/features/leads/lead-value-form"
 import { LeadPriorityForm } from "@/features/leads/lead-priority-form"
+import { LeadStageForm } from "@/features/leads/lead-stage-form"
 
 type LeadDetailsPageProps = {
   params: Promise<{
@@ -772,16 +773,11 @@ export default async function LeadDetailsPage({
                   </form>
                 </div>
 
-                <div>
-                  <p className="text-sm font-medium">
-                    Current stage
-                  </p>
-
-                  <div className="mt-3">
-                    <Badge variant="outline">
-                      {leadStageLabels[lead.stage]}
-                    </Badge>
-                  </div>
+                <div className="border-t pt-5">
+                  <LeadStageForm
+                    leadId={lead.id}
+                    stage={lead.stage}
+                  />
                 </div>
 
                 <div>

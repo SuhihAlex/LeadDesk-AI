@@ -61,6 +61,7 @@ export async function changeLeadStageAction(
     }
   }
 
+  revalidatePath("/app")
   revalidatePath("/app/pipeline")
   revalidatePath("/app/inbox")
   revalidatePath(
