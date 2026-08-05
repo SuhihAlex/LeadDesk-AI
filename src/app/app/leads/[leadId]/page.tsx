@@ -43,6 +43,8 @@ import { QualificationButton } from "@/features/ai/qualification-button"
 import { formatDate } from "@/lib/format-date"
 import { getInitials } from "@/lib/get-initials"
 
+import { ReplyDraftForm } from "@/features/ai/reply-draft-form"
+
 type LeadDetailsPageProps = {
   params: Promise<{
     leadId: string
@@ -446,19 +448,11 @@ export default async function LeadDetailsPage({
         </div>
 
         {lead.replyDraft && (
-          <div className="rounded-xl border bg-muted/20 p-4">
-            <p className="text-sm font-medium">
-              Reply draft
-            </p>
-
-            <p className="mt-3 text-sm font-medium">
-              {lead.replyDraft.subject}
-            </p>
-
-            <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-muted-foreground">
-              {lead.replyDraft.body}
-            </p>
-          </div>
+          <ReplyDraftForm
+            key={lead.replyDraft.id}
+            leadId={lead.id}
+            draft={lead.replyDraft}
+          />
         )}
       </>
     ) : (
