@@ -38,6 +38,7 @@ export type DashboardSourceBreakdownItem = {
 export type DashboardEmailFailure = {
   id: string
   leadId: string
+  draftId: string
   recipientEmail: string
   subject: string
   provider: string

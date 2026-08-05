@@ -48,6 +48,7 @@ type DashboardEmailDeliveryRow = {
   recipient_email: string
   subject: string
   provider: string
+  draft_id: string
   status:
     | "processing"
     | "sent"
@@ -196,6 +197,7 @@ export async function getDashboardAnalytics(): Promise<DashboardAnalytics> {
         `
           id,
           lead_id,
+          draft_id,
           recipient_email,
           subject,
           provider,
@@ -413,6 +415,7 @@ export async function getDashboardAnalytics(): Promise<DashboardAnalytics> {
       .map((delivery) => ({
         id: delivery.id,
         leadId: delivery.lead_id,
+        draftId: delivery.draft_id,
         recipientEmail:
           delivery.recipient_email,
         subject: delivery.subject,

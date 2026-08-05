@@ -29,6 +29,8 @@ import type {
 } from "@/features/dashboard/types"
 import { formatDate } from "@/lib/format-date"
 
+import { RetryEmailDeliveryButton } from "@/features/email/retry-email-delivery-button"
+
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -480,33 +482,38 @@ export default async function DashboardPage() {
               <div className="divide-y">
                 {analytics.recentEmailFailures.map(
                   (failure) => (
-                    <Link
+                    <div
                       key={failure.id}
-                      href={`/app/leads/${failure.leadId}`}
-                      className="grid gap-3 px-5 py-4 transition-colors hover:bg-muted/40 sm:grid-cols-[1fr_auto] sm:px-6"
+                      className="grid gap-4 px-5 py-4 sm:grid-cols-[1fr_auto]"
                     >
-                      <div className="min-w-0">
+                      <Link
+                        href={`/app/leads/${failure.leadId}`}
+                        className="min-w-0 rounded-md transition-opacity hover:opacity-80"
+                      >
                         <p className="truncate text-sm font-medium">
                           {failure.subject}
                         </p>
 
                         <p className="mt-1 truncate text-sm text-muted-foreground">
-                          {failure.recipientEmail}
-                          {" · "}
-                          {failure.provider}
+                          {failure.recipientEmail} · {failure.provider}
                         </p>
 
                         <p className="mt-2 line-clamp-2 text-sm text-destructive">
                           {failure.errorMessage}
                         </p>
-                      </div>
 
-                      <p className="text-xs text-muted-foreground sm:text-right">
-                        {formatDate(
-                          failure.failedAt,
-                        )}
-                      </p>
-                    </Link>
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          {formatDate(failure.failedAt)}
+                        </p>
+                      </Link>
+
+                      <div className="flex items-start justify-end">
+                        <RetryEmailDeliveryButton
+                          leadId={failure.leadId}
+                          draftId={failure.draftId}
+                        />
+                      </div>
+                    </div>
                   ),
                 )}
               </div>

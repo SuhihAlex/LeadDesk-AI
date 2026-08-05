@@ -9,6 +9,17 @@ import { createClient } from "@/lib/supabase/server"
 
 import type { EmailProvider } from "@/features/email/providers/types"
 
+function revalidateEmailDeliveryPaths(
+  leadId: string,
+): void {
+  revalidatePath("/app")
+  revalidatePath("/app/inbox")
+  revalidatePath("/app/pipeline")
+  revalidatePath(
+    `/app/leads/${leadId}`,
+  )
+}
+
 const sendLeadEmailSchema = z.object({
   leadId: z.string().uuid(),
   draftId: z.string().uuid(),
@@ -110,6 +121,10 @@ export async function sendLeadEmailAction(
       },
     )
 
+    revalidateEmailDeliveryPaths(
+      parsed.data.leadId,
+    )
+
     return {
       status: "error",
       message:
@@ -166,6 +181,10 @@ export async function sendLeadEmailAction(
       },
     )
 
+    revalidateEmailDeliveryPaths(
+      parsed.data.leadId,
+    )
+
     return {
       status: "error",
       message:
@@ -173,11 +192,8 @@ export async function sendLeadEmailAction(
     }
   }
 
-  revalidatePath("/app")
-  revalidatePath("/app/inbox")
-  revalidatePath("/app/pipeline")
-  revalidatePath(
-    `/app/leads/${parsed.data.leadId}`,
+  revalidateEmailDeliveryPaths(
+    parsed.data.leadId,
   )
 
   return {
