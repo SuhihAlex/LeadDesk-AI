@@ -2,6 +2,8 @@ import "server-only"
 
 import { leadStages } from "@/features/leads/constants"
 import type {
+  AiProcessingStatus,
+  AiServiceFit,
   LeadBudgetRange,
   LeadPriority,
   LeadProjectType,
@@ -23,6 +25,15 @@ type PipelineLeadRow = {
   priority: LeadPriority
   stage: LeadStage
   ai_score: number | null
+  ai_status: AiProcessingStatus
+  qualification:
+    | {
+        service_fit: AiServiceFit
+      }
+    | {
+        service_fit: AiServiceFit
+      }[]
+    | null
   is_unread: boolean
   created_at: string
   assigned_profile:
@@ -81,6 +92,10 @@ export async function getPipelineLeads(): Promise<PipelineResult> {
         priority,
         stage,
         ai_score,
+        ai_status,
+        qualification:lead_qualifications!lead_qualifications_lead_id_fkey (
+          service_fit
+        ),
         is_unread,
         created_at,
         assigned_profile:profiles!leads_assigned_to_fkey (
@@ -109,6 +124,10 @@ export async function getPipelineLeads(): Promise<PipelineResult> {
       row.assigned_profile,
     )
 
+    const qualification = getSingleRelation(
+      row.qualification,
+    )
+
     return {
       id: row.id,
       fullName: row.full_name,
@@ -121,6 +140,9 @@ export async function getPipelineLeads(): Promise<PipelineResult> {
       priority: row.priority,
       stage: row.stage,
       aiScore: row.ai_score,
+      aiStatus: row.ai_status,
+      aiServiceFit:
+        qualification?.service_fit ?? null,
       isUnread: row.is_unread,
       createdAt: row.created_at,
       assignedTo: assignedProfile

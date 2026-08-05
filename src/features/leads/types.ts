@@ -77,6 +77,8 @@ export type PipelineLead = {
   priority: LeadPriority
   stage: LeadStage
   aiScore: number | null
+  aiStatus: AiProcessingStatus
+  aiServiceFit: AiServiceFit | null
   isUnread: boolean
   createdAt: string
   assignedTo: {

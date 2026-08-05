@@ -53,6 +53,20 @@ type PipelineCardProps = {
   disabled: boolean
 }
 
+const aiStatusLabels = {
+  pending: "Pending",
+  processing: "Processing",
+  completed: "Completed",
+  failed: "Failed",
+} as const
+
+const aiServiceFitLabels = {
+  poor: "Poor",
+  partial: "Partial",
+  good: "Good",
+  excellent: "Excellent",
+} as const
+
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -130,6 +144,15 @@ function PipelineLeadCard({
       }
     : undefined
 
+  const isStrongLead =
+    lead.aiStatus === "completed" &&
+    lead.aiScore !== null &&
+    lead.aiScore >= 80 &&
+    lead.aiServiceFit === "excellent"
+
+  const isFailedQualification =
+    lead.aiStatus === "failed"
+
   return (
     <article
       ref={setNodeRef}
@@ -137,7 +160,11 @@ function PipelineLeadCard({
       className={
         isDragging
           ? "rounded-xl border bg-background p-4 opacity-40 shadow-sm"
-          : "rounded-xl border bg-background p-4 shadow-xs transition-shadow hover:shadow-sm"
+          : isFailedQualification
+            ? "rounded-xl border border-destructive/40 bg-destructive/5 p-4 shadow-xs transition-shadow hover:shadow-sm"
+            : isStrongLead
+              ? "rounded-xl border border-primary/40 bg-primary/5 p-4 shadow-xs transition-shadow hover:shadow-sm"
+              : "rounded-xl border bg-background p-4 shadow-xs transition-shadow hover:shadow-sm"
       }
     >
       <div className="flex items-start justify-between gap-3">
@@ -196,8 +223,45 @@ function PipelineLeadCard({
           {leadBudgetRangeLabels[lead.budgetRange]}
         </p>
 
-        {lead.aiScore !== null && (
-          <p>AI score: {lead.aiScore}</p>
+        <div className="flex flex-wrap items-center gap-2 pt-1">
+          <Badge
+            variant={
+              lead.aiStatus === "failed"
+                ? "destructive"
+                : lead.aiStatus === "completed"
+                  ? "default"
+                  : "outline"
+            }
+            className="capitalize"
+          >
+            {aiStatusLabels[lead.aiStatus]}
+          </Badge>
+
+          {lead.aiServiceFit && (
+            <Badge
+              variant="secondary"
+              className="capitalize"
+            >
+              {aiServiceFitLabels[lead.aiServiceFit]}
+            </Badge>
+          )}
+        </div>
+
+        {lead.aiScore !== null ? (
+          <p>
+            AI score{" "}
+            <span className="font-medium text-foreground">
+              {lead.aiScore}/100
+            </span>
+          </p>
+        ) : (
+          <p>No AI score yet</p>
+        )}
+
+        {isFailedQualification && (
+          <p className="font-medium text-destructive">
+            Retry required
+          </p>
         )}
       </div>
 
@@ -459,6 +523,27 @@ export function PipelineBoard({
               <p className="mt-1 truncate text-xs text-muted-foreground">
                 {activeLead.company || "No company"}
               </p>
+
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <Badge
+                  variant={
+                    activeLead.aiStatus === "failed"
+                      ? "destructive"
+                      : activeLead.aiStatus === "completed"
+                        ? "default"
+                        : "outline"
+                  }
+                  className="capitalize"
+                >
+                  {aiStatusLabels[activeLead.aiStatus]}
+                </Badge>
+
+                {activeLead.aiScore !== null && (
+                  <Badge variant="secondary">
+                    {activeLead.aiScore}/100
+                  </Badge>
+                )}
+              </div>
             </div>
           ) : null}
         </DragOverlay>
