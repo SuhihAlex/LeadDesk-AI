@@ -16,6 +16,13 @@ export const leadStages: LeadStage[] = [
   "lost",
 ]
 
+export const leadSources: LeadSource[] = [
+  "website_form",
+  "referral",
+  "email",
+  "manual",
+]
+
 export const leadStageLabels: Record<LeadStage, string> = {
   new: "New",
   qualified: "Qualified",
