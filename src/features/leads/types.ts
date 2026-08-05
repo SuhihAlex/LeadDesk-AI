@@ -118,6 +118,7 @@ export type LeadActivityType =
   | "email_sent"
   | "ai_qualification_completed"
   | "ai_qualification_failed"
+  | "lead_value_updated"
 
 export type LeadActivityItem = {
   id: string

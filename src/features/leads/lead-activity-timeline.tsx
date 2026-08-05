@@ -1,6 +1,7 @@
 import {
   Bot,
   CheckCircle2,
+  CircleDollarSign,
   CircleUserRound,
   Eye,
   FileText,
@@ -54,6 +55,10 @@ const activityPresentation: Record<
     label: "Assignment changed",
     icon: UserRoundCheck,
   },
+  lead_value_updated: {
+    label: "Estimated value updated",
+    icon: CircleDollarSign,
+  },
   note_added: {
     label: "Note added",
     icon: MessageSquareText,
@@ -93,6 +98,42 @@ function getStringMetadata(
   return typeof value === "string" && value.length > 0
     ? value
     : null
+}
+
+function getNumberMetadata(
+  details: Record<string, unknown>,
+  key: string,
+): number | null {
+  const value = details[key]
+
+  if (typeof value === "number") {
+    return Number.isFinite(value)
+      ? value
+      : null
+  }
+
+  if (
+    typeof value === "string" &&
+    value.trim().length > 0
+  ) {
+    const parsed = Number(value)
+
+    return Number.isFinite(parsed)
+      ? parsed
+      : null
+  }
+
+  return null
+}
+
+function formatCurrency(
+  value: number,
+): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 2,
+  }).format(value)
 }
 
 function isLeadStage(value: string): value is LeadStage {
@@ -144,6 +185,38 @@ function getActivityDescription(
         : "Lead became unassigned"
     }
 
+    case "lead_value_updated": {
+      const previousValue = getNumberMetadata(
+        activity.details,
+        "previousValue",
+      )
+      const value = getNumberMetadata(
+        activity.details,
+        "value",
+      )
+
+      if (
+        previousValue !== null &&
+        value !== null
+      ) {
+        return `${formatCurrency(
+          previousValue,
+        )} → ${formatCurrency(value)}`
+      }
+
+      if (value !== null) {
+        return `Set to ${formatCurrency(value)}`
+      }
+
+      if (previousValue !== null) {
+        return `Cleared from ${formatCurrency(
+          previousValue,
+        )}`
+      }
+
+      return "Estimated value cleared"
+    }
+
     case "task_created":
     case "task_completed": {
       const taskTitle = getStringMetadata(
@@ -175,6 +248,14 @@ function getActivityPresentation(
 ): ActivityPresentation {
   const presentation =
     activityPresentation[activity.type]
+
+  if (!presentation) {
+    return {
+      label: activity.title || "Lead activity",
+      description: null,
+      icon: FileText,
+    }
+  }
 
   return {
     label: presentation.label,

@@ -44,6 +44,7 @@ import { formatDate } from "@/lib/format-date"
 import { getInitials } from "@/lib/get-initials"
 
 import { ReplyDraftForm } from "@/features/ai/reply-draft-form"
+import { LeadValueForm } from "@/features/leads/lead-value-form"
 
 type LeadDetailsPageProps = {
   params: Promise<{
@@ -264,6 +265,13 @@ export default async function LeadDetailsPage({
                       />
                       {formatDate(lead.createdAt)}
                     </p>
+                  </div>
+
+                  <div className="rounded-xl border bg-muted/20 p-4">
+                    <LeadValueForm
+                      leadId={lead.id}
+                      estimatedValue={lead.estimatedValue}
+                    />
                   </div>
                 </div>
 
