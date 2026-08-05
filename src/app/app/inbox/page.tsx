@@ -43,6 +43,20 @@ type InboxPageProps = {
   searchParams: Promise<InboxSearchParams>
 }
 
+const aiStatusLabels = {
+  pending: "Pending",
+  processing: "Processing",
+  completed: "Completed",
+  failed: "Failed",
+} as const
+
+const aiServiceFitLabels = {
+  poor: "Poor",
+  partial: "Partial",
+  good: "Good",
+  excellent: "Excellent",
+} as const
+
 function getActiveFilterLabels(
   filters: InboxFilters,
 ): string[] {
@@ -64,6 +78,18 @@ function getActiveFilterLabels(
 
   if (filters.source) {
     labels.push(`Source: ${leadSourceLabels[filters.source]}`)
+  }
+
+  if (filters.aiStatus) {
+    labels.push(
+      `AI status: ${aiStatusLabels[filters.aiStatus]}`,
+    )
+  }
+
+  if (filters.serviceFit) {
+    labels.push(
+      `Service fit: ${aiServiceFitLabels[filters.serviceFit]}`,
+    )
   }
 
   if (filters.unreadOnly) {
@@ -155,7 +181,7 @@ export default async function InboxPage({
               <form
                 method="get"
                 action="/app/inbox"
-                className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(240px,1.5fr)_repeat(4,minmax(140px,1fr))_auto]"
+                className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(240px,1.5fr)_repeat(6,minmax(130px,1fr))_auto]"
               >
                 <div className="relative md:col-span-2 xl:col-span-1">
                   <Search
@@ -228,6 +254,52 @@ export default async function InboxPage({
                     <option value="">All sources</option>
 
                     {Object.entries(leadSourceLabels).map(
+                      ([value, label]) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ),
+                    )}
+                  </select>
+                </label>
+
+                <label className="grid gap-1.5">
+                  <span className="sr-only">
+                    AI status
+                  </span>
+
+                  <select
+                    name="aiStatus"
+                    defaultValue={filters.aiStatus ?? ""}
+                    className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                    aria-label="Filter by AI status"
+                  >
+                    <option value="">All AI statuses</option>
+
+                    {Object.entries(aiStatusLabels).map(
+                      ([value, label]) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ),
+                    )}
+                  </select>
+                </label>
+
+                <label className="grid gap-1.5">
+                  <span className="sr-only">
+                    Service fit
+                  </span>
+
+                  <select
+                    name="serviceFit"
+                    defaultValue={filters.serviceFit ?? ""}
+                    className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                    aria-label="Filter by service fit"
+                  >
+                    <option value="">All service fits</option>
+
+                    {Object.entries(aiServiceFitLabels).map(
                       ([value, label]) => (
                         <option key={value} value={value}>
                           {label}
@@ -349,7 +421,7 @@ export default async function InboxPage({
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[980px] border-collapse text-sm">
+                <table className="w-full min-w-[1120px] border-collapse text-sm">
                   <thead>
                     <tr className="border-b bg-muted/40 text-left">
                       <th className="px-5 py-3 font-medium text-muted-foreground">
@@ -358,6 +430,10 @@ export default async function InboxPage({
 
                       <th className="px-5 py-3 font-medium text-muted-foreground">
                         Project
+                      </th>
+
+                      <th className="px-5 py-3 font-medium text-muted-foreground">
+                        AI
                       </th>
 
                       <th className="px-5 py-3 font-medium text-muted-foreground">
@@ -438,12 +514,58 @@ export default async function InboxPage({
                               ]
                             }
                           </p>
+                        </td>
 
-                          {lead.aiScore !== null && (
-                            <p className="mt-1 text-xs text-muted-foreground">
-                              AI score: {lead.aiScore}
-                            </p>
-                          )}
+                        <td className="px-5 py-4">
+                          <div className="space-y-2">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Badge
+                                variant={
+                                  lead.aiStatus === "failed"
+                                    ? "destructive"
+                                    : lead.aiStatus === "completed"
+                                      ? "default"
+                                      : "outline"
+                                }
+                                className="capitalize"
+                              >
+                                {aiStatusLabels[lead.aiStatus]}
+                              </Badge>
+
+                              {lead.aiServiceFit && (
+                                <Badge
+                                  variant="secondary"
+                                  className="capitalize"
+                                >
+                                  {
+                                    aiServiceFitLabels[
+                                      lead.aiServiceFit
+                                    ]
+                                  }
+                                </Badge>
+                              )}
+                            </div>
+
+                            {lead.aiScore !== null ? (
+                              <p className="text-xs text-muted-foreground">
+                                Score:{" "}
+                                <span className="font-medium text-foreground">
+                                  {lead.aiScore}
+                                </span>
+                                /100
+                              </p>
+                            ) : (
+                              <p className="text-xs text-muted-foreground">
+                                No score yet
+                              </p>
+                            )}
+
+                            {lead.aiStatus === "failed" && (
+                              <p className="text-xs text-destructive">
+                                Retry required
+                              </p>
+                            )}
+                          </div>
                         </td>
 
                         <td className="px-5 py-4 text-muted-foreground">

@@ -2,6 +2,8 @@ import "server-only"
 
 import { getCurrentWorkspace } from "@/features/workspace/get-current-workspace"
 import type {
+  AiProcessingStatus,
+  AiServiceFit,
   InboxFilters,
   LeadBudgetRange,
   LeadInboxResult,
@@ -28,6 +30,15 @@ type LeadRow = {
   is_unread: boolean
   estimated_value: number | string | null
   ai_score: number | null
+  ai_status: AiProcessingStatus
+  qualification:
+    | {
+        service_fit: AiServiceFit
+      }
+    | {
+        service_fit: AiServiceFit
+      }[]
+    | null
   created_at: string
   assigned_profile:
     | {
@@ -82,6 +93,11 @@ export async function getInboxLeads(
     })
     .eq("workspace_id", context.workspace.id)
 
+  const qualificationRelation =
+    filters.serviceFit
+      ? "qualification:lead_qualifications!lead_qualifications_lead_id_fkey!inner"
+      : "qualification:lead_qualifications!lead_qualifications_lead_id_fkey"
+
   let query = supabase
     .from("leads")
     .select(
@@ -99,7 +115,11 @@ export async function getInboxLeads(
         is_unread,
         estimated_value,
         ai_score,
+        ai_status,
         created_at,
+        ${qualificationRelation} (
+          service_fit
+        ),
         assigned_profile:profiles!leads_assigned_to_fkey (
           id,
           full_name,
@@ -136,6 +156,20 @@ export async function getInboxLeads(
 
   if (filters.source) {
     query = query.eq("source", filters.source)
+  }
+
+  if (filters.aiStatus) {
+    query = query.eq(
+      "ai_status",
+      filters.aiStatus,
+    )
+  }
+
+  if (filters.serviceFit) {
+    query = query.eq(
+      "qualification.service_fit",
+      filters.serviceFit,
+    )
   }
 
   if (filters.unreadOnly) {
@@ -199,6 +233,12 @@ export async function getInboxLeads(
       ? row.assigned_profile[0]
       : row.assigned_profile
 
+    const qualification = Array.isArray(
+      row.qualification,
+    )
+      ? row.qualification[0]
+      : row.qualification
+
     return {
       id: row.id,
       fullName: row.full_name,
@@ -213,6 +253,9 @@ export async function getInboxLeads(
       isUnread: row.is_unread,
       estimatedValue: normalizeEstimatedValue(row.estimated_value),
       aiScore: row.ai_score,
+      aiStatus: row.ai_status,
+      aiServiceFit:
+        qualification?.service_fit ?? null,
       createdAt: row.created_at,
       assignedTo: assignedProfile
         ? {

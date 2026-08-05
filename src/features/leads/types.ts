@@ -57,6 +57,8 @@ export type LeadListItem = {
   isUnread: boolean
   estimatedValue: number | null
   aiScore: number | null
+  aiStatus: AiProcessingStatus
+  aiServiceFit: AiServiceFit | null
   createdAt: string
   assignedTo: {
     id: string
@@ -187,6 +189,8 @@ export type InboxFilters = {
   stage?: LeadStage
   priority?: LeadPriority
   source?: LeadSource
+  aiStatus?: AiProcessingStatus
+  serviceFit?: AiServiceFit
   unreadOnly: boolean
   sort: InboxSort
 }
@@ -222,6 +226,12 @@ export type AiProcessingStatus =
   | "processing"
   | "completed"
   | "failed"
+
+export type AiServiceFit =
+  | "poor"
+  | "partial"
+  | "good"
+  | "excellent"
 
 export type LeadQualification = {
   id: string

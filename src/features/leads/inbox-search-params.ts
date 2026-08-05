@@ -18,6 +18,20 @@ const inboxPrioritySchema = z.enum([
   "urgent",
 ])
 
+const inboxAiStatusSchema = z.enum([
+  "pending",
+  "processing",
+  "completed",
+  "failed",
+])
+
+const inboxServiceFitSchema = z.enum([
+  "poor",
+  "partial",
+  "good",
+  "excellent",
+])
+
 const inboxSourceSchema = z.enum([
   "website_form",
   "referral",
@@ -37,6 +51,8 @@ const inboxSearchParamsSchema = z.object({
   stage: z.string().optional(),
   priority: z.string().optional(),
   source: z.string().optional(),
+  aiStatus: z.string().optional(),
+  serviceFit: z.string().optional(),
   unread: z.string().optional(),
   sort: z.string().optional(),
 })
@@ -70,6 +86,12 @@ export function parseInboxSearchParams(
     stage: getSingleValue(searchParams.stage),
     priority: getSingleValue(searchParams.priority),
     source: getSingleValue(searchParams.source),
+    aiStatus: getSingleValue(
+      searchParams.aiStatus,
+    ),
+    serviceFit: getSingleValue(
+      searchParams.serviceFit,
+    ),
     unread: getSingleValue(searchParams.unread),
     sort: getSingleValue(searchParams.sort),
   }
@@ -87,6 +109,15 @@ export function parseInboxSearchParams(
   const priorityResult = inboxPrioritySchema.safeParse(
     parsed.data.priority,
   )
+  const aiStatusResult =
+    inboxAiStatusSchema.safeParse(
+      parsed.data.aiStatus,
+    )
+
+  const serviceFitResult =
+    inboxServiceFitSchema.safeParse(
+      parsed.data.serviceFit,
+    )
   const sourceResult = inboxSourceSchema.safeParse(parsed.data.source)
   const sortResult = inboxSortSchema.safeParse(parsed.data.sort)
 
@@ -95,6 +126,13 @@ export function parseInboxSearchParams(
     stage: stageResult.success ? stageResult.data : undefined,
     priority: priorityResult.success
       ? priorityResult.data
+      : undefined,
+    aiStatus: aiStatusResult.success
+      ? aiStatusResult.data
+      : undefined,
+
+    serviceFit: serviceFitResult.success
+      ? serviceFitResult.data
       : undefined,
     source: sourceResult.success ? sourceResult.data : undefined,
     unreadOnly: parsed.data.unread === "true",
@@ -110,6 +148,8 @@ export function hasActiveInboxFilters(
       filters.stage ||
       filters.priority ||
       filters.source ||
+      filters.aiStatus ||
+      filters.serviceFit ||
       filters.unreadOnly ||
       filters.sort !== "newest",
   )
