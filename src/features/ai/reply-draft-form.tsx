@@ -5,10 +5,15 @@ import {
   useState,
 } from "react"
 import {
+  AlertCircle,
   Check,
   Copy,
+  LoaderCircle,
   Save,
 } from "lucide-react"
+
+import { Badge } from "@/components/ui/badge"
+import { formatDate } from "@/lib/format-date"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -21,14 +26,11 @@ import {
 } from "@/features/ai/reply-draft-state"
 import { SendLeadEmailButton } from "@/features/email/send-lead-email-button"
 
+import type { LeadReplyDraft } from "@/features/leads/types"
+
 type ReplyDraftFormProps = {
   leadId: string
-  draft: {
-    id: string
-    subject: string
-    body: string
-    status: "ai_generated" | "edited" | "sent"
-  }
+  draft: LeadReplyDraft
 }
 
 export function ReplyDraftForm({
@@ -240,6 +242,107 @@ export function ReplyDraftForm({
           )}
         </div>
       </form>
+
+      {draft.delivery && (
+        <div className="rounded-lg border bg-background/60 p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="text-sm font-medium">
+                Email delivery
+              </p>
+
+              <p className="mt-1 text-xs text-muted-foreground">
+                To {draft.delivery.recipientEmail}
+              </p>
+            </div>
+
+            <Badge
+              variant={
+                draft.delivery.status === "sent"
+                  ? "default"
+                  : draft.delivery.status === "failed"
+                    ? "destructive"
+                    : "outline"
+              }
+              className="capitalize"
+            >
+              {draft.delivery.status === "processing" && (
+                <LoaderCircle
+                  className="size-3 animate-spin"
+                  aria-hidden="true"
+                />
+              )}
+
+              {draft.delivery.status === "sent" && (
+                <Check
+                  className="size-3"
+                  aria-hidden="true"
+                />
+              )}
+
+              {draft.delivery.status === "failed" && (
+                <AlertCircle
+                  className="size-3"
+                  aria-hidden="true"
+                />
+              )}
+
+              {draft.delivery.status}
+            </Badge>
+          </div>
+
+          <div className="mt-4 grid gap-3 text-xs text-muted-foreground sm:grid-cols-2">
+            <p>
+              Provider:{" "}
+              <span className="font-medium text-foreground">
+                {draft.delivery.provider}
+              </span>
+            </p>
+
+            <p>
+              Started:{" "}
+              <span className="font-medium text-foreground">
+                {formatDate(
+                  draft.delivery.startedAt,
+                )}
+              </span>
+            </p>
+
+            {draft.delivery.sentAt && (
+              <p>
+                Sent:{" "}
+                <span className="font-medium text-foreground">
+                  {formatDate(
+                    draft.delivery.sentAt,
+                  )}
+                </span>
+              </p>
+            )}
+
+            {draft.delivery.providerMessageId && (
+              <p className="break-all">
+                Message ID:{" "}
+                <span className="font-medium text-foreground">
+                  {
+                    draft.delivery
+                      .providerMessageId
+                  }
+                </span>
+              </p>
+            )}
+          </div>
+
+          {draft.delivery.status === "failed" &&
+            draft.delivery.errorMessage && (
+              <p
+                role="alert"
+                className="mt-4 text-sm text-destructive"
+              >
+                {draft.delivery.errorMessage}
+              </p>
+            )}
+        </div>
+      )}
 
       <div className="border-t pt-4">
         <SendLeadEmailButton

@@ -158,6 +158,18 @@ type LeadQualificationRow = {
   updated_at: string
 }
 
+type LeadEmailDeliveryRow = {
+  id: string
+  recipient_email: string
+  provider: string
+  provider_message_id: string | null
+  status: "processing" | "sent" | "failed"
+  error_message: string | null
+  started_at: string
+  sent_at: string | null
+  failed_at: string | null
+}
+
 type LeadReplyDraftRow = {
   id: string
   subject: string
@@ -166,6 +178,10 @@ type LeadReplyDraftRow = {
   generated_by_model: string | null
   created_at: string
   updated_at: string
+  email_delivery:
+    | LeadEmailDeliveryRow
+    | LeadEmailDeliveryRow[]
+    | null
 }
 
 function normalizeEstimatedValue(
@@ -378,7 +394,18 @@ export async function getLeadDetails(
           status,
           generated_by_model,
           created_at,
-          updated_at
+          updated_at,
+          email_delivery:lead_email_deliveries!lead_email_deliveries_draft_id_fkey (
+            id,
+            recipient_email,
+            provider,
+            provider_message_id,
+            status,
+            error_message,
+            started_at,
+            sent_at,
+            failed_at
+          )
         `,
       )
       .eq("workspace_id", context.workspace.id)
@@ -608,6 +635,12 @@ export async function getLeadDetails(
   const replyDraftRow =
     replyDraftData as LeadReplyDraftRow | null
 
+  const emailDelivery = replyDraftRow
+    ? getSingleRelation(
+        replyDraftRow.email_delivery,
+      )
+    : null
+
   const replyDraft: LeadReplyDraft | null =
     replyDraftRow
       ? {
@@ -619,6 +652,22 @@ export async function getLeadDetails(
             replyDraftRow.generated_by_model,
           createdAt: replyDraftRow.created_at,
           updatedAt: replyDraftRow.updated_at,
+          delivery: emailDelivery
+            ? {
+                id: emailDelivery.id,
+                recipientEmail:
+                  emailDelivery.recipient_email,
+                provider: emailDelivery.provider,
+                providerMessageId:
+                  emailDelivery.provider_message_id,
+                status: emailDelivery.status,
+                errorMessage:
+                  emailDelivery.error_message,
+                startedAt: emailDelivery.started_at,
+                sentAt: emailDelivery.sent_at,
+                failedAt: emailDelivery.failed_at,
+              }
+            : null,
         }
       : null
 

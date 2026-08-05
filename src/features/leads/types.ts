@@ -269,6 +269,23 @@ export type LeadQualification = {
   updatedAt: string
 }
 
+export type EmailDeliveryStatus =
+  | "processing"
+  | "sent"
+  | "failed"
+
+export type LeadEmailDelivery = {
+  id: string
+  recipientEmail: string
+  provider: string
+  providerMessageId: string | null
+  status: EmailDeliveryStatus
+  errorMessage: string | null
+  startedAt: string
+  sentAt: string | null
+  failedAt: string | null
+}
+
 export type LeadReplyDraft = {
   id: string
   subject: string
@@ -277,6 +294,7 @@ export type LeadReplyDraft = {
   generatedByModel: string | null
   createdAt: string
   updatedAt: string
+  delivery: LeadEmailDelivery | null
 }
 
 export const initialPublicLeadFormState: PublicLeadFormState = {

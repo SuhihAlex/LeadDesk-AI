@@ -279,8 +279,21 @@ function getActivityDescription(
         "subject",
       )
 
-      return subject
-        ? `Subject: ${subject}`
+      const recipientEmail = getStringMetadata(
+        activity.details,
+        "recipientEmail",
+      )
+
+      if (subject && recipientEmail) {
+        return `${subject} → ${recipientEmail}`
+      }
+
+      if (subject) {
+        return `Subject: ${subject}`
+      }
+
+      return recipientEmail
+        ? `Sent to ${recipientEmail}`
         : null
     }
 
