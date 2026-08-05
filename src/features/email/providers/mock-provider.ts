@@ -27,6 +27,7 @@ export class MockEmailProvider
       to: input.to,
       subject: input.subject,
       bodyLength: input.body.length,
+      idempotencyKey: input.idempotencyKey,
     })
 
     return {

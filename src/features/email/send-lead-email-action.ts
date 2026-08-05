@@ -7,6 +7,8 @@ import { getEmailProvider } from "@/features/email/get-email-provider"
 import type { SendLeadEmailState } from "@/features/email/send-email-state"
 import { createClient } from "@/lib/supabase/server"
 
+import type { EmailProvider } from "@/features/email/providers/types"
+
 const sendLeadEmailSchema = z.object({
   leadId: z.string().uuid(),
   draftId: z.string().uuid(),
@@ -44,7 +46,20 @@ export async function sendLeadEmailAction(
     }
   }
 
-  const provider = getEmailProvider()
+  let provider: EmailProvider
+
+  try {
+    provider = getEmailProvider()
+  } catch (error) {
+    return {
+      status: "error",
+      message:
+        error instanceof Error
+          ? error.message
+          : "The email provider configuration is invalid.",
+    }
+  }
+
   const supabase = await createClient()
 
   const {
@@ -107,6 +122,8 @@ export async function sendLeadEmailAction(
       to: delivery.recipient_email,
       subject: delivery.subject,
       body: delivery.body,
+      idempotencyKey:
+        `lead-reply/${deliveryId}`,
     })
 
     const {
