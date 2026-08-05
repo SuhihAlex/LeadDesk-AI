@@ -6,13 +6,19 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { getCurrentWorkspace } from "@/features/workspace/get-current-workspace"
 import { WorkspaceSettingsForm } from "@/features/workspace/workspace-settings-form"
 
+import { EmailConfigurationCard } from "@/features/email/email-configuration-card"
+import { getEmailConfigurationStatus } from "@/features/email/email-configuration"
+
 export default async function SettingsPage() {
   const context = await getCurrentWorkspace()
+
+  const emailConfiguration =
+    getEmailConfigurationStatus()
 
   return (
     <AppShell
       title="Settings"
-      description="Manage your profile and workspace identity."
+      description="Manage your workspace identity, security, and service integrations."
     >
       <div className="mx-auto max-w-4xl space-y-6">
         <Card>
@@ -45,6 +51,10 @@ export default async function SettingsPage() {
             <WorkspaceSettingsForm context={context} />
           </CardContent>
         </Card>
+
+        <EmailConfigurationCard
+          status={emailConfiguration}
+        />
 
         <div className="grid gap-4 md:grid-cols-2">
           <Card>
