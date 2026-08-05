@@ -19,6 +19,7 @@ import {
 import {
   initialReplyDraftActionState,
 } from "@/features/ai/reply-draft-state"
+import { SendLeadEmailButton } from "@/features/email/send-lead-email-button"
 
 type ReplyDraftFormProps = {
   leadId: string
@@ -42,8 +43,10 @@ export function ReplyDraftForm({
 
   const [subject, setSubject] =
     useState(draft.subject)
+
   const [body, setBody] =
     useState(draft.body)
+
   const [copied, setCopied] =
     useState(false)
 
@@ -68,177 +71,183 @@ export function ReplyDraftForm({
   }
 
   return (
-    <form
-      action={formAction}
-      className="space-y-5 rounded-xl border bg-muted/20 p-4"
-    >
-      <input
-        type="hidden"
-        name="leadId"
-        value={leadId}
-      />
-
-      <input
-        type="hidden"
-        name="draftId"
-        value={draft.id}
-      />
-
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="text-sm font-medium">
-            Reply draft
-          </p>
-
-          <p className="mt-1 text-xs capitalize text-muted-foreground">
-            Status:{" "}
-            {draft.status.replace("_", " ")}
-          </p>
-        </div>
-
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={copyDraft}
-        >
-          {copied ? (
-            <Check
-              className="size-4"
-              aria-hidden="true"
-            />
-          ) : (
-            <Copy
-              className="size-4"
-              aria-hidden="true"
-            />
-          )}
-
-          {copied ? "Copied" : "Copy"}
-        </Button>
-      </div>
-
-      <div className="space-y-2">
-        <label
-          htmlFor={`reply-subject-${draft.id}`}
-          className="text-sm font-medium"
-        >
-          Subject
-        </label>
-
-        <Input
-          id={`reply-subject-${draft.id}`}
-          name="subject"
-          value={subject}
-          onChange={(event) => {
-            setSubject(event.target.value)
-          }}
-          maxLength={240}
-          disabled={isPending || isSent}
-          aria-invalid={
-            Boolean(
-              state.fieldErrors?.subject,
-            )
-          }
+    <div className="space-y-5 rounded-xl border bg-muted/20 p-4">
+      <form
+        action={formAction}
+        className="space-y-5"
+      >
+        <input
+          type="hidden"
+          name="leadId"
+          value={leadId}
         />
 
-        {state.fieldErrors?.subject?.map(
-          (error) => (
-            <p
-              key={error}
-              className="text-sm text-destructive"
-            >
-              {error}
+        <input
+          type="hidden"
+          name="draftId"
+          value={draft.id}
+        />
+
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-medium">
+              Reply draft
             </p>
-          ),
-        )}
-      </div>
 
-      <div className="space-y-2">
-        <label
-          htmlFor={`reply-body-${draft.id}`}
-          className="text-sm font-medium"
-        >
-          Message
-        </label>
+            <p className="mt-1 text-xs capitalize text-muted-foreground">
+              Status:{" "}
+              {draft.status.replace("_", " ")}
+            </p>
+          </div>
 
-        <Textarea
-          id={`reply-body-${draft.id}`}
-          name="body"
-          value={body}
-          onChange={(event) => {
-            setBody(event.target.value)
-          }}
-          rows={12}
-          maxLength={10000}
-          disabled={isPending || isSent}
-          className="min-h-64 resize-y"
-          aria-invalid={
-            Boolean(
-              state.fieldErrors?.body,
-            )
-          }
-        />
-
-        <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
-          <span>
-            {body.length.toLocaleString(
-              "en-US",
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={copyDraft}
+          >
+            {copied ? (
+              <Check
+                className="size-4"
+                aria-hidden="true"
+              />
+            ) : (
+              <Copy
+                className="size-4"
+                aria-hidden="true"
+              />
             )}
-            /10,000
-          </span>
 
-          {isSent && (
-            <span>
-              Sent drafts are read-only.
-            </span>
-          )}
+            {copied ? "Copied" : "Copy"}
+          </Button>
         </div>
 
-        {state.fieldErrors?.body?.map(
-          (error) => (
-            <p
-              key={error}
-              className="text-sm text-destructive"
-            >
-              {error}
-            </p>
-          ),
-        )}
-      </div>
+        <div className="space-y-2">
+          <label
+            htmlFor={`reply-subject-${draft.id}`}
+            className="text-sm font-medium"
+          >
+            Subject
+          </label>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <Button
-          type="submit"
-          disabled={isPending || isSent}
-        >
-          <Save
-            className="size-4"
-            aria-hidden="true"
+          <Input
+            id={`reply-subject-${draft.id}`}
+            name="subject"
+            value={subject}
+            onChange={(event) => {
+              setSubject(event.target.value)
+            }}
+            maxLength={240}
+            disabled={isPending || isSent}
+            aria-invalid={Boolean(
+              state.fieldErrors?.subject,
+            )}
           />
 
-          {isPending
-            ? "Saving..."
-            : "Save draft"}
-        </Button>
+          {state.fieldErrors?.subject?.map(
+            (error) => (
+              <p
+                key={error}
+                className="text-sm text-destructive"
+              >
+                {error}
+              </p>
+            ),
+          )}
+        </div>
 
-        {state.message && (
-          <p
-            role={
-              state.status === "error"
-                ? "alert"
-                : "status"
-            }
-            className={
-              state.status === "error"
-                ? "text-sm text-destructive"
-                : "text-sm text-muted-foreground"
-            }
+        <div className="space-y-2">
+          <label
+            htmlFor={`reply-body-${draft.id}`}
+            className="text-sm font-medium"
           >
-            {state.message}
-          </p>
-        )}
+            Message
+          </label>
+
+          <Textarea
+            id={`reply-body-${draft.id}`}
+            name="body"
+            value={body}
+            onChange={(event) => {
+              setBody(event.target.value)
+            }}
+            rows={12}
+            maxLength={10000}
+            disabled={isPending || isSent}
+            className="min-h-64 resize-y"
+            aria-invalid={Boolean(
+              state.fieldErrors?.body,
+            )}
+          />
+
+          <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+            <span>
+              {body.length.toLocaleString(
+                "en-US",
+              )}
+              /10,000
+            </span>
+
+            {isSent && (
+              <span>
+                Sent drafts are read-only.
+              </span>
+            )}
+          </div>
+
+          {state.fieldErrors?.body?.map(
+            (error) => (
+              <p
+                key={error}
+                className="text-sm text-destructive"
+              >
+                {error}
+              </p>
+            ),
+          )}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <Button
+            type="submit"
+            disabled={isPending || isSent}
+          >
+            <Save
+              className="size-4"
+              aria-hidden="true"
+            />
+
+            {isPending
+              ? "Saving..."
+              : "Save draft"}
+          </Button>
+
+          {state.message && (
+            <p
+              role={
+                state.status === "error"
+                  ? "alert"
+                  : "status"
+              }
+              className={
+                state.status === "error"
+                  ? "text-sm text-destructive"
+                  : "text-sm text-muted-foreground"
+              }
+            >
+              {state.message}
+            </p>
+          )}
+        </div>
+      </form>
+
+      <div className="border-t pt-4">
+        <SendLeadEmailButton
+          leadId={leadId}
+          draftId={draft.id}
+          isSent={isSent}
+        />
       </div>
-    </form>
+    </div>
   )
 }
