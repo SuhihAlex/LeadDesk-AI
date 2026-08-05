@@ -9,10 +9,12 @@ import {
   MessageSquareText,
   MoveRight,
   UserRoundCheck,
+  Flag,
 } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import {
+  leadPriorityLabels,
   leadStageLabels,
 } from "@/features/leads/constants"
 import type {
@@ -62,6 +64,10 @@ const activityPresentation: Record<
   note_added: {
     label: "Note added",
     icon: MessageSquareText,
+  },
+  lead_priority_updated: {
+    label: "Lead priority updated",
+    icon: Flag,
   },
   task_created: {
     label: "Task created",
@@ -140,6 +146,22 @@ function isLeadStage(value: string): value is LeadStage {
   return value in leadStageLabels
 }
 
+function isLeadPriority(
+  value: string,
+): value is keyof typeof leadPriorityLabels {
+  return value in leadPriorityLabels
+}
+
+function getPriorityLabel(
+  value: string | null,
+): string | null {
+  if (!value || !isLeadPriority(value)) {
+    return null
+  }
+
+  return leadPriorityLabels[value]
+}
+
 function getStageLabel(
   value: string | null,
 ): string | null {
@@ -183,6 +205,30 @@ function getActivityDescription(
       return assigneeName
         ? `Assigned to ${assigneeName}`
         : "Lead became unassigned"
+    }
+
+    case "lead_priority_updated": {
+      const previousPriority = getPriorityLabel(
+        getStringMetadata(
+          activity.details,
+          "previousPriority",
+        ),
+      )
+
+      const priority = getPriorityLabel(
+        getStringMetadata(
+          activity.details,
+          "priority",
+        ),
+      )
+
+      if (previousPriority && priority) {
+        return `${previousPriority} → ${priority}`
+      }
+
+      return priority
+        ? `Changed to ${priority}`
+        : null
     }
 
     case "lead_value_updated": {

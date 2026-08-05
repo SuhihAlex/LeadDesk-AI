@@ -45,6 +45,7 @@ import { getInitials } from "@/lib/get-initials"
 
 import { ReplyDraftForm } from "@/features/ai/reply-draft-form"
 import { LeadValueForm } from "@/features/leads/lead-value-form"
+import { LeadPriorityForm } from "@/features/leads/lead-priority-form"
 
 type LeadDetailsPageProps = {
   params: Promise<{
@@ -209,11 +210,7 @@ export default async function LeadDetailsPage({
                     </p>
 
                     <p className="mt-2 text-sm text-muted-foreground">
-                      {
-                        leadProjectTypeLabels[
-                          lead.projectType
-                        ]
-                      }
+                      {leadProjectTypeLabels[lead.projectType]}
                     </p>
                   </div>
 
@@ -227,11 +224,8 @@ export default async function LeadDetailsPage({
                         className="size-4"
                         aria-hidden="true"
                       />
-                      {
-                        leadBudgetRangeLabels[
-                          lead.budgetRange
-                        ]
-                      }
+
+                      {leadBudgetRangeLabels[lead.budgetRange]}
                     </p>
                   </div>
 
@@ -245,11 +239,8 @@ export default async function LeadDetailsPage({
                         className="size-4"
                         aria-hidden="true"
                       />
-                      {
-                        leadTimelineLabels[
-                          lead.desiredTimeline
-                        ]
-                      }
+
+                      {leadTimelineLabels[lead.desiredTimeline]}
                     </p>
                   </div>
 
@@ -263,14 +254,24 @@ export default async function LeadDetailsPage({
                         className="size-4"
                         aria-hidden="true"
                       />
+
                       {formatDate(lead.createdAt)}
                     </p>
                   </div>
+                </div>
 
+                <div className="grid gap-4 lg:grid-cols-2">
                   <div className="rounded-xl border bg-muted/20 p-4">
                     <LeadValueForm
                       leadId={lead.id}
                       estimatedValue={lead.estimatedValue}
+                    />
+                  </div>
+
+                  <div className="rounded-xl border bg-muted/20 p-4">
+                    <LeadPriorityForm
+                      leadId={lead.id}
+                      priority={lead.priority}
                     />
                   </div>
                 </div>
