@@ -53,10 +53,15 @@ export async function createPublicLeadAction(
   })
 
   if (error) {
+    const limitReached = error.message.includes(
+      "FREE_PLAN_LEAD_LIMIT_REACHED",
+    )
+
     return {
       status: "error",
-      message:
-        "Your inquiry could not be submitted. Please check the form and try again.",
+      message: limitReached
+        ? "This workspace has reached the Free plan limit of 50 leads this month."
+        : "Your inquiry could not be submitted. Please check the form and try again.",
     }
   }
 

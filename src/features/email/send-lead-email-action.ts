@@ -87,11 +87,17 @@ export async function sendLeadEmailAction(
   )
 
   if (claimError || !deliveryId) {
+    const limitReached =
+      claimError?.message.includes(
+        "FREE_PLAN_EMAIL_LIMIT_REACHED",
+      ) ?? false
+
     return {
       status: "error",
-      message:
-        claimError?.message ||
-        "The email delivery could not be started.",
+      message: limitReached
+        ? "The Free plan limit of 20 emails this month has been reached."
+        : claimError?.message ||
+          "The email delivery could not be started.",
     }
   }
 

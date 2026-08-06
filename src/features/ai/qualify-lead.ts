@@ -111,6 +111,42 @@ export async function qualifyLead(
     }
   }
 
+  const {
+    data: usageClaimed,
+    error: usageError,
+  } = await supabase.rpc(
+    "claim_ai_generation_usage",
+    {
+      target_workspace_id:
+        context.workspace.id,
+      target_lead_id: lead.id,
+    },
+  )
+
+  if (usageError || usageClaimed !== true) {
+    const limitReached =
+      usageError?.message.includes(
+        "FREE_PLAN_AI_LIMIT_REACHED",
+      ) ?? false
+
+    await supabase.rpc(
+      "fail_lead_qualification",
+      {
+        target_lead_id: lead.id,
+        failure_message: limitReached
+          ? "The Free plan AI generation limit has been reached."
+          : "AI usage could not be claimed.",
+      },
+    )
+
+    return {
+      status: "error",
+      message: limitReached
+        ? "The Free plan limit of 20 AI generations this month has been reached."
+        : "AI qualification could not be started.",
+    }
+  }
+
   try {
     const provider =
       getAiQualificationProvider()

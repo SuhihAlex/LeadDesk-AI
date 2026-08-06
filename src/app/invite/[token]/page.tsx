@@ -31,6 +31,8 @@ const errorMessages: Record<string, string> = {
     "This invitation was issued to a different email address.",
   existing_workspace:
     "This account already belongs to another workspace. LeadDesk AI supports one workspace per user in the MVP.",
+  member_limit:
+    "This workspace has reached the Free plan limit of one member. The Owner must upgrade the workspace before another member can join.",
   expired: "This invitation has expired.",
   unavailable: "This invitation is no longer available.",
   accept_failed:

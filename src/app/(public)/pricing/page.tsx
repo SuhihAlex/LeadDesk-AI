@@ -16,7 +16,7 @@ const plans = [
     href: "/register",
     featured: false,
     features: [
-      "Up to 30 leads",
+      "Up to 50 leads per month",
       "1 workspace member",
       "Basic dashboard",
       "Limited AI qualification",

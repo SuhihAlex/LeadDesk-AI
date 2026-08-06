@@ -17,6 +17,7 @@ import {
   createCustomerPortalSessionAction,
 } from "@/features/billing/actions"
 import { getCurrentWorkspaceSubscription } from "@/features/billing/get-current-workspace-subscription"
+import { getCurrentWorkspaceUsage } from "@/features/billing/get-current-workspace-usage"
 import type {
   SubscriptionStatus,
   WorkspacePlan,
@@ -91,9 +92,12 @@ export default async function BillingPage() {
   const context = await getCurrentWorkspace()
   const isOwner = context.workspace.role === "owner"
 
-  const subscription = isOwner
-    ? await getCurrentWorkspaceSubscription()
-    : null
+  const [subscription, usage] = isOwner
+    ? await Promise.all([
+        getCurrentWorkspaceSubscription(),
+        getCurrentWorkspaceUsage(),
+      ])
+    : [null, null]
 
   return (
     <AppShell
@@ -202,6 +206,72 @@ export default async function BillingPage() {
               </CardContent>
             </Card>
 
+            {usage ? (
+              <Card>
+                <CardHeader className="border-b">
+                  <h2 className="text-lg font-semibold">
+                    Monthly usage
+                  </h2>
+
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Current calendar-month usage for the workspace.
+                  </p>
+                </CardHeader>
+
+                <CardContent className="grid gap-4 p-6 sm:grid-cols-2 lg:grid-cols-4">
+                  {[
+                    {
+                      label: "Leads",
+                      value: usage.leads,
+                      limit: subscription.plan === "free"
+                        ? 50
+                        : null,
+                    },
+                    {
+                      label: "AI generations",
+                      value: usage.aiGenerations,
+                      limit: subscription.plan === "free"
+                        ? 20
+                        : null,
+                    },
+                    {
+                      label: "Emails",
+                      value: usage.emails,
+                      limit: subscription.plan === "free"
+                        ? 20
+                        : null,
+                    },
+                    {
+                      label: "Members",
+                      value: usage.members,
+                      limit:
+                        subscription.plan === "free"
+                          ? 1
+                          : subscription.plan === "pro"
+                            ? 5
+                            : 15,
+                    },
+                  ].map((item) => (
+                    <div
+                      key={item.label}
+                      className="rounded-xl border p-4"
+                    >
+                      <p className="text-sm text-muted-foreground">
+                        {item.label}
+                      </p>
+
+                      <p className="mt-2 text-2xl font-semibold">
+                        {item.value}
+                        {item.limit !== null
+                          ? ` / ${item.limit}`
+                          : ""}
+                      </p>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            ) : null}
+
             {subscription.status === "inactive" ||
             subscription.status === "canceled" ? (
               <div className="grid gap-5 lg:grid-cols-2">
@@ -299,9 +369,9 @@ export default async function BillingPage() {
                   </p>
 
                   <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                    Checkout and Customer Portal use Stripe test mode only.
-                    Webhook synchronization will be connected in the next
-                    billing step. No real payments will be processed.
+                    Checkout, Customer Portal and webhook synchronization
+                    use Stripe test mode only. No real payments will be
+                    processed.
                   </p>
                 </div>
               </CardContent>

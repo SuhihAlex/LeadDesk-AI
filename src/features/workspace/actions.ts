@@ -213,6 +213,14 @@ function getInvitationErrorCode(message: string) {
     return "email_mismatch"
   }
 
+  if (
+    normalized.includes(
+      "free_plan_member_limit_reached",
+    )
+  ) {
+    return "member_limit"
+  }
+
   if (normalized.includes("another workspace")) {
     return "existing_workspace"
   }
