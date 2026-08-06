@@ -12,7 +12,10 @@ import {
   CardContent,
   CardHeader,
 } from "@/components/ui/card"
-import { createCheckoutSessionAction } from "@/features/billing/actions"
+import {
+  createCheckoutSessionAction,
+  createCustomerPortalSessionAction,
+} from "@/features/billing/actions"
 import { getCurrentWorkspaceSubscription } from "@/features/billing/get-current-workspace-subscription"
 import type {
   SubscriptionStatus,
@@ -142,11 +145,25 @@ export default async function BillingPage() {
                     </p>
                   </div>
 
-                  <Badge
-                    variant={getStatusVariant(subscription.status)}
-                  >
-                    {statusNames[subscription.status]}
-                  </Badge>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <Badge
+                      variant={getStatusVariant(subscription.status)}
+                    >
+                      {statusNames[subscription.status]}
+                    </Badge>
+
+                    {subscription.stripeCustomerId ? (
+                      <form action={createCustomerPortalSessionAction}>
+                        <Button
+                          type="submit"
+                          size="sm"
+                          variant="outline"
+                        >
+                          Manage billing
+                        </Button>
+                      </form>
+                    ) : null}
+                  </div>
                 </div>
               </CardHeader>
 
@@ -282,9 +299,9 @@ export default async function BillingPage() {
                   </p>
 
                   <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                    Checkout uses Stripe test payments only. Customer Portal
-                    and webhook synchronization will be connected in the next
-                    billing steps. No real payments will be processed.
+                    Checkout and Customer Portal use Stripe test mode only.
+                    Webhook synchronization will be connected in the next
+                    billing step. No real payments will be processed.
                   </p>
                 </div>
               </CardContent>

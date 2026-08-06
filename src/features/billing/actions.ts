@@ -115,3 +115,48 @@ export async function createCheckoutSessionAction(
 
   redirect(checkoutUrl)
 }
+
+export async function createCustomerPortalSessionAction() {
+  const context = await getCurrentWorkspace()
+
+  if (context.workspace.role !== "owner") {
+    redirect("/app/billing?error=owner_required")
+  }
+
+  const subscription =
+    await getCurrentWorkspaceSubscription()
+
+  if (!subscription) {
+    redirect("/app/billing?error=subscription_unavailable")
+  }
+
+  if (!subscription.stripeCustomerId) {
+    redirect("/app/billing?error=customer_unavailable")
+  }
+
+  const stripe = getStripeClient()
+  const siteUrl = getSiteUrl()
+
+  let portalUrl: string | null = null
+
+  try {
+    const session =
+      await stripe.billingPortal.sessions.create({
+        customer: subscription.stripeCustomerId,
+        return_url: `${siteUrl}/app/billing`,
+      })
+
+    portalUrl = session.url
+  } catch (error) {
+    console.error(
+      "Stripe Customer Portal Session could not be created.",
+      error,
+    )
+  }
+
+  if (!portalUrl) {
+    redirect("/app/billing?error=portal_failed")
+  }
+
+  redirect(portalUrl)
+}
