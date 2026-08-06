@@ -2,8 +2,8 @@ export const siteConfig = {
   name: "LeadDesk AI",
   shortName: "LeadDesk",
   description:
-    "AI-powered lead qualification CRM for web studios and SaaS development teams.",
-  url: "http://localhost:3000",
+  "LeadDesk AI is a production-ready CRM for web studios with secure lead capture, structured AI qualification, transparent scoring, pipeline management, tasks, analytics and Stripe test billing.",
+  url: "https://lead-desk-ai.vercel.app",
   navigation: {
     public: [
       {
