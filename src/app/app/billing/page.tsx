@@ -1,15 +1,18 @@
 import {
+  Check,
   CreditCard,
   ShieldCheck,
 } from "lucide-react"
 
 import { AppShell } from "@/components/layout/app-shell"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
   CardHeader,
 } from "@/components/ui/card"
+import { createCheckoutSessionAction } from "@/features/billing/actions"
 import { getCurrentWorkspaceSubscription } from "@/features/billing/get-current-workspace-subscription"
 import type {
   SubscriptionStatus,
@@ -31,6 +34,37 @@ const statusNames: Record<SubscriptionStatus, string> = {
   past_due: "Past due",
   canceled: "Canceled",
 }
+
+const checkoutPlans = [
+  {
+    id: "pro",
+    name: "Pro",
+    price: "$29",
+    description:
+      "For web studios actively processing incoming opportunities.",
+    features: [
+      "Higher lead limits",
+      "Up to 5 workspace members",
+      "Full AI qualification",
+      "Reply drafts and email sending",
+    ],
+    featured: true,
+  },
+  {
+    id: "agency",
+    name: "Agency",
+    price: "$79",
+    description:
+      "For larger teams managing a higher lead volume.",
+    features: [
+      "Extended lead limits",
+      "Up to 15 workspace members",
+      "Full AI and email workflow",
+      "Workspace analytics",
+    ],
+    featured: false,
+  },
+] as const
 
 function getStatusVariant(
   status: SubscriptionStatus,
@@ -151,6 +185,88 @@ export default async function BillingPage() {
               </CardContent>
             </Card>
 
+            {subscription.status === "inactive" ||
+            subscription.status === "canceled" ? (
+              <div className="grid gap-5 lg:grid-cols-2">
+                {checkoutPlans.map((plan) => (
+                  <Card
+                    key={plan.id}
+                    className={
+                      plan.featured
+                        ? "border-primary shadow-lg shadow-primary/10"
+                        : undefined
+                    }
+                  >
+                    <CardHeader className="space-y-4 border-b">
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h2 className="text-xl font-semibold">
+                            {plan.name}
+                          </h2>
+
+                          {plan.featured ? (
+                            <Badge>Most popular</Badge>
+                          ) : null}
+                        </div>
+
+                        <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                          {plan.description}
+                        </p>
+                      </div>
+
+                      <div className="flex items-end gap-2">
+                        <span className="text-4xl font-semibold tracking-[-0.04em]">
+                          {plan.price}
+                        </span>
+
+                        <span className="pb-1 text-sm text-muted-foreground">
+                          /month
+                        </span>
+                      </div>
+                    </CardHeader>
+
+                    <CardContent className="flex h-full flex-col p-6">
+                      <ul className="space-y-3">
+                        {plan.features.map((feature) => (
+                          <li
+                            key={feature}
+                            className="flex items-start gap-3 text-sm text-muted-foreground"
+                          >
+                            <Check
+                              className="mt-0.5 size-4 shrink-0 text-success"
+                              aria-hidden="true"
+                            />
+
+                            <span>{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+
+                      <form
+                        action={createCheckoutSessionAction}
+                        className="mt-8"
+                      >
+                        <input
+                          type="hidden"
+                          name="plan"
+                          value={plan.id}
+                        />
+
+                        <Button
+                          type="submit"
+                          size="lg"
+                          className="w-full"
+                          variant={plan.featured ? "default" : "outline"}
+                        >
+                          Choose {plan.name}
+                        </Button>
+                      </form>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : null}
+
             <Card>
               <CardContent className="flex items-start gap-4 p-6">
                 <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
@@ -166,9 +282,9 @@ export default async function BillingPage() {
                   </p>
 
                   <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                    Checkout, Customer Portal and webhook synchronization
-                    will be connected in the next billing step. No real
-                    payments will be processed.
+                    Checkout uses Stripe test payments only. Customer Portal
+                    and webhook synchronization will be connected in the next
+                    billing steps. No real payments will be processed.
                   </p>
                 </div>
               </CardContent>
