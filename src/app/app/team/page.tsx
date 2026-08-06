@@ -18,6 +18,7 @@ import { CopyInvitationLinkButton } from "@/features/workspace/copy-invitation-l
 import { getWorkspaceInvitations } from "@/features/workspace/get-workspace-invitations"
 import { revokeWorkspaceInvitationAction } from "@/features/workspace/actions"
 import { WorkspaceInvitationForm } from "@/features/workspace/workspace-invitation-form"
+import { WorkspaceMemberActions } from "@/features/workspace/workspace-member-actions"
 
 export default async function TeamPage() {
   const [context, members, invitations] = await Promise.all([
@@ -114,7 +115,7 @@ export default async function TeamPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between gap-6 sm:justify-end">
+                    <div className="flex flex-wrap items-center justify-between gap-4 sm:justify-end">
                       <div className="text-left sm:text-right">
                         <p className="text-xs text-muted-foreground">
                           Joined
@@ -141,6 +142,15 @@ export default async function TeamPage() {
 
                         {member.role}
                       </Badge>
+
+                      {isOwner &&
+                      !member.isCurrentUser &&
+                      member.role === "member" ? (
+                        <WorkspaceMemberActions
+                          membershipId={member.id}
+                          memberName={member.fullName}
+                        />
+                      ) : null}
                     </div>
                   </article>
                 ))}

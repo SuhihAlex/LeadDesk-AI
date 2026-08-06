@@ -273,3 +273,88 @@ export async function acceptWorkspaceInvitationAction(
 
   redirect("/app/team")
 }
+
+export async function removeWorkspaceMemberAction(
+  formData: FormData,
+) {
+  const membershipId = getStringValue(
+    formData,
+    "membershipId",
+  )
+
+  if (!membershipId) {
+    return
+  }
+
+  const context = await getCurrentWorkspace()
+
+  if (context.workspace.role !== "owner") {
+    return
+  }
+
+  const supabase = await createClient()
+
+  const { error } = await supabase.rpc(
+    "remove_workspace_member",
+    {
+      target_membership_id: membershipId,
+    },
+  )
+
+  if (error) {
+    console.error(
+      "Workspace member could not be removed.",
+      error,
+    )
+
+    return
+  }
+
+  revalidatePath("/app", "layout")
+  revalidatePath("/app/team")
+  revalidatePath("/app/billing")
+  revalidatePath("/app/inbox")
+  revalidatePath("/app/tasks")
+}
+
+export async function transferWorkspaceOwnershipAction(
+  formData: FormData,
+) {
+  const membershipId = getStringValue(
+    formData,
+    "membershipId",
+  )
+
+  if (!membershipId) {
+    return
+  }
+
+  const context = await getCurrentWorkspace()
+
+  if (context.workspace.role !== "owner") {
+    return
+  }
+
+  const supabase = await createClient()
+
+  const { error } = await supabase.rpc(
+    "transfer_workspace_ownership",
+    {
+      target_membership_id: membershipId,
+    },
+  )
+
+  if (error) {
+    console.error(
+      "Workspace ownership could not be transferred.",
+      error,
+    )
+
+    return
+  }
+
+  revalidatePath("/app", "layout")
+  revalidatePath("/app/team")
+  revalidatePath("/app/billing")
+  revalidatePath("/app/settings")
+}
