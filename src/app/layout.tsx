@@ -21,7 +21,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   title: {
-    default: `${siteConfig.name} — AI lead qualification CRM`,
+    default: `${siteConfig.name} — AI-Powered CRM for Web Studios`,
     template: `%s — ${siteConfig.name}`,
   },
   description: siteConfig.description,
@@ -45,13 +45,22 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: siteConfig.url,
     siteName: siteConfig.name,
-    title: `${siteConfig.name} — AI lead qualification CRM`,
+    title: `${siteConfig.name} — AI-Powered CRM for Web Studios`,
     description: siteConfig.description,
+    images: [
+      {
+        url: "/screenshots/home.png",
+        width: 1439,
+        height: 799,
+        alt: "LeadDesk AI — AI-powered CRM for web studios",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: `${siteConfig.name} — AI lead qualification CRM`,
+    title: `${siteConfig.name} — AI-Powered CRM for Web Studios`,
     description: siteConfig.description,
+    images: ["/screenshots/home.png"],
   },
   robots: {
     index: true,
