@@ -9,6 +9,8 @@ import { WorkspaceSettingsForm } from "@/features/workspace/workspace-settings-f
 import { EmailConfigurationCard } from "@/features/email/email-configuration-card"
 import { getEmailConfigurationStatus } from "@/features/email/email-configuration"
 
+import { WorkspaceLogoForm } from "@/features/workspace/workspace-logo-form"
+
 export default async function SettingsPage() {
   const context = await getCurrentWorkspace()
 
@@ -47,8 +49,16 @@ export default async function SettingsPage() {
             </div>
           </CardHeader>
 
-          <CardContent>
+          <CardContent className="space-y-6">
             <WorkspaceSettingsForm context={context} />
+
+            <WorkspaceLogoForm
+              workspaceName={context.workspace.name}
+              logoUrl={context.workspace.logoUrl}
+              isOwner={
+                context.workspace.role === "owner"
+              }
+            />
           </CardContent>
         </Card>
 

@@ -358,3 +358,171 @@ export async function transferWorkspaceOwnershipAction(
   revalidatePath("/app/billing")
   revalidatePath("/app/settings")
 }
+
+const WORKSPACE_LOGO_BUCKET = "workspace-logos"
+const MAX_WORKSPACE_LOGO_SIZE = 2 * 1024 * 1024
+
+const workspaceLogoMimeTypes = {
+  "image/png": "png",
+  "image/jpeg": "jpg",
+  "image/webp": "webp",
+} as const
+
+const workspaceLogoExtensions = [
+  "png",
+  "jpg",
+  "webp",
+] as const
+
+function getWorkspaceLogoPaths(workspaceId: string) {
+  return workspaceLogoExtensions.map(
+    (extension) =>
+      `${workspaceId}/logo.${extension}`,
+  )
+}
+
+export async function uploadWorkspaceLogoAction(
+  formData: FormData,
+) {
+  const context = await getCurrentWorkspace()
+
+  if (context.workspace.role !== "owner") {
+    return
+  }
+
+  const file = formData.get("logo")
+
+  if (!(file instanceof File) || file.size === 0) {
+    return
+  }
+
+  if (file.size > MAX_WORKSPACE_LOGO_SIZE) {
+    console.error(
+      "Workspace logo exceeds the 2 MB limit.",
+    )
+    return
+  }
+
+  const extension =
+    workspaceLogoMimeTypes[
+      file.type as keyof typeof workspaceLogoMimeTypes
+    ]
+
+  if (!extension) {
+    console.error(
+      "Workspace logo has an unsupported file type.",
+    )
+    return
+  }
+
+  const supabase = await createClient()
+  const logoPath =
+    `${context.workspace.id}/logo.${extension}`
+
+  const existingPaths = getWorkspaceLogoPaths(
+    context.workspace.id,
+  )
+
+  const { error: removeError } = await supabase.storage
+    .from(WORKSPACE_LOGO_BUCKET)
+    .remove(existingPaths)
+
+  if (removeError) {
+    console.error(
+      "Previous workspace logo could not be removed.",
+      removeError,
+    )
+  }
+
+  const { error: uploadError } = await supabase.storage
+    .from(WORKSPACE_LOGO_BUCKET)
+    .upload(logoPath, file, {
+      cacheControl: "3600",
+      contentType: file.type,
+      upsert: true,
+    })
+
+  if (uploadError) {
+    console.error(
+      "Workspace logo could not be uploaded.",
+      uploadError,
+    )
+    return
+  }
+
+  const {
+    data: { publicUrl },
+  } = supabase.storage
+    .from(WORKSPACE_LOGO_BUCKET)
+    .getPublicUrl(logoPath)
+
+  const logoUrl =
+    `${publicUrl}?v=${Date.now()}`
+
+  const { error: workspaceError } = await supabase
+    .from("workspaces")
+    .update({
+      logo_url: logoUrl,
+    })
+    .eq("id", context.workspace.id)
+
+  if (workspaceError) {
+    await supabase.storage
+      .from(WORKSPACE_LOGO_BUCKET)
+      .remove([logoPath])
+
+    console.error(
+      "Workspace logo URL could not be saved.",
+      workspaceError,
+    )
+    return
+  }
+
+  revalidatePath("/app", "layout")
+  revalidatePath("/app/settings")
+  revalidatePath("/app/team")
+}
+
+export async function removeWorkspaceLogoAction() {
+  const context = await getCurrentWorkspace()
+
+  if (context.workspace.role !== "owner") {
+    return
+  }
+
+  const supabase = await createClient()
+
+  const { error: workspaceError } = await supabase
+    .from("workspaces")
+    .update({
+      logo_url: null,
+    })
+    .eq("id", context.workspace.id)
+
+  if (workspaceError) {
+    console.error(
+      "Workspace logo could not be cleared.",
+      workspaceError,
+    )
+    return
+  }
+
+  const logoPaths = getWorkspaceLogoPaths(
+    context.workspace.id,
+  )
+
+  const { error: removeError } = await supabase.storage
+    .from(WORKSPACE_LOGO_BUCKET)
+    .remove(logoPaths)
+
+  if (removeError) {
+    console.error(
+      "Workspace logo file could not be removed.",
+      removeError,
+    )
+  }
+
+  revalidatePath("/app", "layout")
+  revalidatePath("/app/settings")
+  revalidatePath("/app/team")
+}
